@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#D4AF37"/>
+      <stop offset="100%" style="stop-color:#C9A227"/>
+    </linearGradient>
+  </defs>
+  <!-- Navy blue circle background -->
+  <circle cx="32" cy="32" r="30" fill="#1B365D"/>
+  <!-- Gold accent ring -->
+  <circle cx="32" cy="32" r="26" fill="none" stroke="url(#goldGradient)" stroke-width="2"/>
+  <!-- GAM Letters -->
+  <text x="32" y="42" font-family="Arial, sans-serif" font-size="22" font-weight="bold" text-anchor="middle" fill="#FFFFFF">G</text>
+  <text x="32" y="42" font-family="Arial, sans-serif" font-size="22" font-weight="bold" text-anchor="middle" fill="url(#goldGradient)" opacity="0.3">G</text>
+  <!-- Small gold accent dot -->
+  <circle cx="48" cy="18" r="4" fill="url(#goldGradient)"/>
+</svg>
