@@ -30,7 +30,11 @@ function DropdownMenu({ children, open: controlledOpen, onOpenChange }: {
 
   return (
     <DropdownMenuContext.Provider value={{ open, setOpen }}>
-      <div className="relative inline-block">
+      <div 
+        className="relative inline-block"
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+      >
         {children}
       </div>
     </DropdownMenuContext.Provider>
@@ -38,36 +42,16 @@ function DropdownMenu({ children, open: controlledOpen, onOpenChange }: {
 }
 
 function DropdownMenuTrigger({ children, asChild, className, ...props }: React.ComponentProps<"button"> & { asChild?: boolean }) {
-  const { open, setOpen } = useDropdownMenu()
-  const triggerRef = React.useRef<HTMLElement>(null)
-  
-  React.useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (triggerRef.current && !triggerRef.current.parentElement?.contains(event.target as Node)) {
-        setOpen(false)
-      }
-    }
-    
-    if (open) {
-      document.addEventListener("mousedown", handleClickOutside)
-      return () => document.removeEventListener("mousedown", handleClickOutside)
-    }
-  }, [open, setOpen])
-
-  const handleClick = () => setOpen(!open)
+  const { open } = useDropdownMenu()
 
   if (asChild && React.isValidElement(children)) {
-    return React.cloneElement(children as React.ReactElement<{ onClick?: () => void }>, {
-      onClick: handleClick,
-    })
+    return children
   }
 
   return (
     <button
-      ref={triggerRef as React.RefObject<HTMLButtonElement>}
       type="button"
       className={className}
-      onClick={handleClick}
       aria-expanded={open}
       {...props}
     >
