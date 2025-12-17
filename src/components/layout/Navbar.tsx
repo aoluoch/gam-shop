@@ -1,6 +1,7 @@
-import { Link, useLocation } from 'react-router-dom';
-import { ShoppingCart, User, Search, ChevronDown, Menu } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { ShoppingCart, User, Search, ChevronDown, Menu, LogOut } from 'lucide-react';
 import { useState } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -18,8 +19,15 @@ import gamLogo from '@/assets/gamlogo.png';
 
 export function Navbar() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate(ROUTES.HOME);
+  };
 
   const isActive = (path: string) => {
     if (path === ROUTES.HOME) {
@@ -137,32 +145,50 @@ export function Navbar() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem asChild>
-                  <Link to={ROUTES.LOGIN} className="w-full cursor-pointer">
-                    Login
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to={ROUTES.REGISTER} className="w-full cursor-pointer">
-                    Register
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link to={ROUTES.ACCOUNT} className="w-full cursor-pointer">
-                    My Account
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to={ROUTES.ORDERS} className="w-full cursor-pointer">
-                    My Orders
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to={ROUTES.WISHLIST} className="w-full cursor-pointer">
-                    Wishlist
-                  </Link>
-                </DropdownMenuItem>
+                {user ? (
+                  <>
+                    <div className="px-2 py-1.5 text-sm font-medium truncate">
+                      {user.user_metadata?.full_name || user.email}
+                    </div>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link to={ROUTES.ACCOUNT} className="w-full cursor-pointer">
+                        My Account
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to={ROUTES.ORDERS} className="w-full cursor-pointer">
+                        My Orders
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to={ROUTES.WISHLIST} className="w-full cursor-pointer">
+                        Wishlist
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem 
+                      className="w-full cursor-pointer text-destructive focus:text-destructive"
+                      onClick={handleSignOut}
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Sign out
+                    </DropdownMenuItem>
+                  </>
+                ) : (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link to={ROUTES.LOGIN} className="w-full cursor-pointer">
+                        Login
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to={ROUTES.REGISTER} className="w-full cursor-pointer">
+                        Register
+                      </Link>
+                    </DropdownMenuItem>
+                  </>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
 
@@ -250,18 +276,58 @@ export function Navbar() {
 
                   {/* Mobile Auth Links */}
                   <div className="border-t pt-4">
-                    <div className="flex flex-col gap-2">
-                      <Button asChild className="w-full">
-                        <Link to={ROUTES.LOGIN} onClick={() => setMobileMenuOpen(false)}>
-                          Login
+                    {user ? (
+                      <div className="flex flex-col gap-2">
+                        <div className="px-3 py-2 text-sm font-medium truncate">
+                          {user.user_metadata?.full_name || user.email}
+                        </div>
+                        <Link
+                          to={ROUTES.ACCOUNT}
+                          className="rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          My Account
                         </Link>
-                      </Button>
-                      <Button variant="outline" asChild className="w-full">
-                        <Link to={ROUTES.REGISTER} onClick={() => setMobileMenuOpen(false)}>
-                          Register
+                        <Link
+                          to={ROUTES.ORDERS}
+                          className="rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          My Orders
                         </Link>
-                      </Button>
-                    </div>
+                        <Link
+                          to={ROUTES.WISHLIST}
+                          className="rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          Wishlist
+                        </Link>
+                        <Button 
+                          variant="outline" 
+                          className="w-full mt-2"
+                          onClick={() => {
+                            handleSignOut();
+                            setMobileMenuOpen(false);
+                          }}
+                        >
+                          <LogOut className="mr-2 h-4 w-4" />
+                          Sign out
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-2">
+                        <Button asChild className="w-full">
+                          <Link to={ROUTES.LOGIN} onClick={() => setMobileMenuOpen(false)}>
+                            Login
+                          </Link>
+                        </Button>
+                        <Button variant="outline" asChild className="w-full">
+                          <Link to={ROUTES.REGISTER} onClick={() => setMobileMenuOpen(false)}>
+                            Register
+                          </Link>
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </SheetContent>

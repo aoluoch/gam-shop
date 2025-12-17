@@ -12,6 +12,8 @@ export const ROUTES = {
   ACCOUNT: '/account',
   LOGIN: '/login',
   REGISTER: '/register',
+  FORGOT_PASSWORD: '/forgot-password',
+  RESET_PASSWORD: '/reset-password',
   ORDERS: '/orders',
   ORDER_TRACK: '/orders/track',
   WISHLIST: '/wishlist',
