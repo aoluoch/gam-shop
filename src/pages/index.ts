@@ -4,3 +4,7 @@ export { LoginPage } from './LoginPage';
 export { RegisterPage } from './RegisterPage';
 export { ForgotPasswordPage } from './ForgotPasswordPage';
 export { ResetPasswordPage } from './ResetPasswordPage';
+export { CartPage } from './Cart';
+export { AccountPage, OrdersPage } from './Account';
+export { CheckoutPage } from './Checkout';
+export { OrderSuccessPage } from './OrderSuccess';

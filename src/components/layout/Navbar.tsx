@@ -2,6 +2,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ShoppingCart, User, Search, ChevronDown, Menu, LogOut } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useCart } from '@/hooks/useCart';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -21,6 +22,7 @@ export function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const { productCount } = useCart();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
 
@@ -35,8 +37,6 @@ export function Navbar() {
     }
     return location.pathname.startsWith(path);
   };
-
-  const cartItemCount = 0; // TODO: Get from cart context
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -129,9 +129,9 @@ export function Navbar() {
             <Button variant="ghost" size="icon" asChild className="relative">
               <Link to={ROUTES.CART} aria-label="Shopping cart">
                 <ShoppingCart className="h-5 w-5" />
-                {cartItemCount > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-secondary text-secondary-foreground text-xs font-bold">
-                    {cartItemCount > 99 ? '99+' : cartItemCount}
+                {productCount > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold">
+                    {productCount > 99 ? '99+' : productCount}
                   </span>
                 )}
               </Link>

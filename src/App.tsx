@@ -7,18 +7,30 @@ import {
   LoginPage, 
   RegisterPage, 
   ForgotPasswordPage, 
-  ResetPasswordPage 
+  ResetPasswordPage,
+  CartPage,
+  AccountPage,
+  OrdersPage,
+  CheckoutPage,
+  OrderSuccessPage,
 } from '@/pages';
 import { AuthProvider } from '@/context/AuthContext';
+import { CartProvider } from '@/context/CartContext';
 import { ToastProvider } from '@/context/ToastContext';
 import { useAuth } from '@/hooks/useAuth';
+import { useAdmin } from '@/hooks/useAdmin';
+import { ProductCard } from '@/components/product';
+import { SAMPLE_PRODUCTS } from '@/constants/products';
+import { HeroSection, FeaturedProducts, CategorySection, TestimonialsSection } from '@/components/home';
 
 // Placeholder pages - will be replaced with actual page components
 function HomePage() {
   return (
-    <div className="container mx-auto px-4 py-12">
-      <h1 className="text-4xl font-bold text-primary mb-4">Welcome to GAM Shop</h1>
-      <p className="text-muted-foreground">Your spiritual resources, apparel, and accessories destination.</p>
+    <div>
+      <HeroSection />
+      <FeaturedProducts />
+      <CategorySection />
+      <TestimonialsSection />
     </div>
   );
 }
@@ -27,34 +39,57 @@ function ShopPage() {
   return (
     <div className="container mx-auto px-4 py-12">
       <h1 className="text-3xl font-bold text-primary mb-4">Shop All Products</h1>
-      <p className="text-muted-foreground">Browse our collection of books, apparel, and accessories.</p>
+      <p className="text-muted-foreground mb-8">Browse our collection of books, apparel, and accessories.</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {SAMPLE_PRODUCTS.map(product => (
+          <ProductCard key={product.id} product={product} />
+        ))}
+      </div>
     </div>
   );
 }
 
 function BooksPage() {
+  const books = SAMPLE_PRODUCTS.filter(p => p.category === 'books');
   return (
     <div className="container mx-auto px-4 py-12">
       <h1 className="text-3xl font-bold text-primary mb-4">Books</h1>
-      <p className="text-muted-foreground">Spiritual books by Apostle David Owusu and Rev. Eunice.</p>
+      <p className="text-muted-foreground mb-8">Spiritual books by Apostle David Owusu and Rev. Eunice.</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {books.map(product => (
+          <ProductCard key={product.id} product={product} />
+        ))}
+      </div>
     </div>
   );
 }
 
 function ApparelPage() {
+  const apparel = SAMPLE_PRODUCTS.filter(p => p.category === 'apparel');
   return (
     <div className="container mx-auto px-4 py-12">
       <h1 className="text-3xl font-bold text-primary mb-4">Apparel</h1>
-      <p className="text-muted-foreground">T-shirts in various sizes and colors.</p>
+      <p className="text-muted-foreground mb-8">T-shirts in various sizes and colors.</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {apparel.map(product => (
+          <ProductCard key={product.id} product={product} />
+        ))}
+      </div>
     </div>
   );
 }
 
 function AccessoriesPage() {
+  const accessories = SAMPLE_PRODUCTS.filter(p => p.category === 'accessories');
   return (
     <div className="container mx-auto px-4 py-12">
       <h1 className="text-3xl font-bold text-primary mb-4">Accessories</h1>
-      <p className="text-muted-foreground">Caps and rubber bands.</p>
+      <p className="text-muted-foreground mb-8">Caps and rubber bands.</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {accessories.map(product => (
+          <ProductCard key={product.id} product={product} />
+        ))}
+      </div>
     </div>
   );
 }
@@ -77,13 +112,28 @@ function ContactPage() {
   );
 }
 
-function CartPage() {
-  return (
-    <div className="container mx-auto px-4 py-12">
-      <h1 className="text-3xl font-bold text-primary mb-4">Shopping Cart</h1>
-      <p className="text-muted-foreground">Your cart is empty.</p>
-    </div>
-  );
+// Admin route wrapper
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading: authLoading } = useAuth();
+  const { isAdmin, loading: adminLoading } = useAdmin();
+  
+  if (authLoading || adminLoading) {
+    return (
+      <div className="container mx-auto px-4 py-12 flex items-center justify-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+  
+  if (!user) {
+    return <Navigate to={ROUTES.LOGIN} replace />;
+  }
+  
+  if (!isAdmin) {
+    return <Navigate to={ROUTES.ACCOUNT} replace />;
+  }
+  
+  return <>{children}</>;
 }
 
 // Protected route wrapper
@@ -124,20 +174,11 @@ function GuestRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-function AccountPage() {
+function AdminDashboard() {
   return (
     <div className="container mx-auto px-4 py-12">
-      <h1 className="text-3xl font-bold text-primary mb-4">My Account</h1>
-      <p className="text-muted-foreground">Manage your account settings.</p>
-    </div>
-  );
-}
-
-function OrdersPage() {
-  return (
-    <div className="container mx-auto px-4 py-12">
-      <h1 className="text-3xl font-bold text-primary mb-4">My Orders</h1>
-      <p className="text-muted-foreground">View your order history.</p>
+      <h1 className="text-3xl font-bold text-primary mb-4">Admin Dashboard</h1>
+      <p className="text-muted-foreground">Manage your store.</p>
     </div>
   );
 }
@@ -164,6 +205,8 @@ function AppRoutes() {
         <Route path={ROUTES.ABOUT} element={<AboutPage />} />
         <Route path={ROUTES.CONTACT} element={<ContactPage />} />
         <Route path={ROUTES.CART} element={<CartPage />} />
+        <Route path={ROUTES.CHECKOUT} element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
+        <Route path="/order-success" element={<OrderSuccessPage />} />
         <Route path={ROUTES.PRIVACY} element={<PrivacyPolicyPage />} />
         <Route path={ROUTES.TERMS} element={<TermsPage />} />
         
@@ -177,6 +220,9 @@ function AppRoutes() {
         <Route path={ROUTES.ACCOUNT} element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
         <Route path={ROUTES.ORDERS} element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
         <Route path={ROUTES.WISHLIST} element={<ProtectedRoute><WishlistPage /></ProtectedRoute>} />
+        
+        {/* Admin routes (require admin role) */}
+        <Route path={ROUTES.ADMIN} element={<AdminRoute><AdminDashboard /></AdminRoute>} />
       </Route>
     </Routes>
   );
@@ -187,7 +233,9 @@ function App() {
     <BrowserRouter>
       <ToastProvider>
         <AuthProvider>
-          <AppRoutes />
+          <CartProvider>
+            <AppRoutes />
+          </CartProvider>
         </AuthProvider>
       </ToastProvider>
     </BrowserRouter>
