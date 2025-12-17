@@ -23,7 +23,7 @@ export function LoginForm() {
     e.preventDefault()
 
     if (!email || !password) {
-      showError('Please fill in all fields')
+      showError('Please enter your email and password to sign in', 'Missing Credentials')
       return
     }
 
@@ -32,9 +32,15 @@ export function LoginForm() {
     setLoading(false)
 
     if (error) {
-      showError(error.message, 'Sign in failed')
+      if (error.message.includes('Invalid login credentials')) {
+        showError('The email or password you entered is incorrect. Please try again.', 'Invalid Credentials')
+      } else if (error.message.includes('Email not confirmed')) {
+        showError('Please verify your email address before signing in. Check your inbox for the verification link.', 'Email Not Verified')
+      } else {
+        showError(error.message, 'Sign In Failed')
+      }
     } else {
-      success('Welcome back!', 'Signed in successfully')
+      success('Welcome back! You are now signed in.', 'Hello Again!')
       navigate(ROUTES.ACCOUNT)
     }
   }

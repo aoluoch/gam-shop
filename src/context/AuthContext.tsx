@@ -48,10 +48,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     })
+
+    // If login succeeded, verify email is confirmed
+    if (!error && data.user && !data.user.email_confirmed_at) {
+      // Sign out the unverified user immediately
+      await supabase.auth.signOut()
+      return {
+        error: {
+          message: 'Email not confirmed',
+          name: 'AuthApiError',
+          status: 400,
+        } as import('@supabase/supabase-js').AuthError,
+      }
+    }
+
     return { error }
   }
 

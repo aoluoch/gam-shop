@@ -15,13 +15,13 @@ export function ForgotPasswordForm() {
   const [success, setSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
   const { resetPassword } = useAuth()
-  const { error: showError } = useToast()
+  const { error: showError, success: showSuccess } = useToast()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (!email) {
-      showError('Please enter your email address')
+      showError('Please enter your email address to receive the reset link', 'Email Required')
       return
     }
 
@@ -30,8 +30,9 @@ export function ForgotPasswordForm() {
     setLoading(false)
 
     if (error) {
-      showError(error.message, 'Reset failed')
+      showError(error.message, 'Reset Request Failed')
     } else {
+      showSuccess('Password reset link sent! Check your email inbox and spam folder.', 'Email Sent')
       setSuccess(true)
     }
   }

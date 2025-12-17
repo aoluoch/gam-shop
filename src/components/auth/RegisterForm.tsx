@@ -20,7 +20,7 @@ export function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const { signUp } = useAuth()
-  const { error: showError } = useToast()
+  const { error: showError, success: showSuccess } = useToast()
 
   const validatePassword = (password: string) => {
     if (password.length < 8) {
@@ -33,18 +33,18 @@ export function RegisterForm() {
     e.preventDefault()
 
     if (!fullName || !email || !password || !confirmPassword) {
-      showError('Please fill in all fields')
+      showError('Please fill in all fields to create your account', 'Missing Information')
       return
     }
 
     const passwordError = validatePassword(password)
     if (passwordError) {
-      showError(passwordError)
+      showError(passwordError, 'Weak Password')
       return
     }
 
     if (password !== confirmPassword) {
-      showError('Passwords do not match')
+      showError('The passwords you entered do not match. Please try again.', 'Passwords Mismatch')
       return
     }
 
@@ -53,8 +53,13 @@ export function RegisterForm() {
     setLoading(false)
 
     if (error) {
-      showError(error.message, 'Registration failed')
+      if (error.message.includes('already registered')) {
+        showError('This email is already registered. Please sign in or use a different email.', 'Account Exists')
+      } else {
+        showError(error.message, 'Registration Failed')
+      }
     } else {
+      showSuccess('Account created successfully! Please check your email to verify your account.', 'Welcome to GAM Shop!')
       setSuccess(true)
     }
   }

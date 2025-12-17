@@ -32,18 +32,18 @@ export function ResetPasswordForm() {
     e.preventDefault()
 
     if (!password || !confirmPassword) {
-      showError('Please fill in all fields')
+      showError('Please enter and confirm your new password', 'Missing Password')
       return
     }
 
     const passwordError = validatePassword(password)
     if (passwordError) {
-      showError(passwordError)
+      showError(passwordError, 'Weak Password')
       return
     }
 
     if (password !== confirmPassword) {
-      showError('Passwords do not match')
+      showError('The passwords you entered do not match. Please try again.', 'Passwords Mismatch')
       return
     }
 
@@ -52,10 +52,14 @@ export function ResetPasswordForm() {
     setLoading(false)
 
     if (error) {
-      showError(error.message, 'Password update failed')
+      if (error.message.includes('same as')) {
+        showError('Your new password must be different from your current password.', 'Same Password')
+      } else {
+        showError(error.message, 'Password Update Failed')
+      }
     } else {
       setSuccess(true)
-      showSuccess('Your password has been updated successfully', 'Password updated')
+      showSuccess('Your password has been updated! You can now sign in with your new password.', 'Password Updated')
       setTimeout(() => {
         navigate(ROUTES.LOGIN)
       }, 3000)
