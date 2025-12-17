@@ -1,0 +1,11 @@
+# Default owner for all files
+* @amosoluoch
+
+# Frontend code
+/src/ @amosoluoch
+
+# Database and backend
+/supabase/ @amosoluoch
+
+# CI/CD configuration
+/.github/ @amosoluoch

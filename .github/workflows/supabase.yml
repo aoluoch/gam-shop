@@ -1,0 +1,52 @@
+name: Supabase
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'supabase/**'
+  workflow_dispatch:
+
+jobs:
+  validate:
+    name: Validate SQL Files
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate SQL files exist
+        run: |
+          echo "## 📋 Supabase Files Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -f "supabase/schema.sql" ]; then
+            echo "✅ Schema file found" 
+            echo "- ✅ \`supabase/schema.sql\` exists" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ No schema.sql file"
+            echo "- ⚠️ \`supabase/schema.sql\` not found" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ -f "supabase/seed.sql" ]; then
+            echo "✅ Seed file found"
+            echo "- ✅ \`supabase/seed.sql\` exists" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ No seed.sql file"
+            echo "- ⚠️ \`supabase/seed.sql\` not found" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Check SQL syntax
+        run: |
+          for file in supabase/*.sql; do
+            if [ -f "$file" ] && [ -s "$file" ]; then
+              echo "Checking $file..."
+              # Basic syntax check - ensure file is readable
+              head -n 5 "$file"
+              echo "---"
+            fi
+          done

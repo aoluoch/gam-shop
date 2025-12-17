@@ -1,0 +1,38 @@
+name: Supabase Keep Alive
+
+on:
+  schedule:
+    # Runs every 6 days to prevent Supabase free tier from pausing due to inactivity
+    - cron: '0 0 */6 * *'
+  workflow_dispatch:
+
+jobs:
+  keep-alive:
+    name: Ping Supabase
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase to prevent inactivity pause
+        run: |
+          echo "🔄 Pinging Supabase to keep it alive..."
+          
+          # Make a simple request to Supabase REST API
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
+            "${{ secrets.VITE_SUPABASE_URL }}/rest/v1/" \
+            -H "apikey: ${{ secrets.VITE_SUPABASE_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.VITE_SUPABASE_ANON_KEY }}")
+          
+          if [ "$RESPONSE" -eq 200 ] || [ "$RESPONSE" -eq 401 ] || [ "$RESPONSE" -eq 404 ]; then
+            echo "✅ Supabase is alive! Response code: $RESPONSE"
+          else
+            echo "⚠️ Unexpected response code: $RESPONSE"
+            exit 1
+          fi
+
+      - name: Summary
+        run: |
+          echo "## 🏓 Supabase Keep Alive" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Successfully pinged Supabase to prevent inactivity pause." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Schedule:** Every 6 days" >> $GITHUB_STEP_SUMMARY
+          echo "**Last Run:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
