@@ -39,11 +39,11 @@ function DropdownMenu({ children, open: controlledOpen, onOpenChange }: {
 
 function DropdownMenuTrigger({ children, asChild, className, ...props }: React.ComponentProps<"button"> & { asChild?: boolean }) {
   const { open, setOpen } = useDropdownMenu()
-  const ref = React.useRef<HTMLButtonElement>(null)
+  const triggerRef = React.useRef<HTMLElement>(null)
   
   React.useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (ref.current && !ref.current.parentElement?.contains(event.target as Node)) {
+      if (triggerRef.current && !triggerRef.current.parentElement?.contains(event.target as Node)) {
         setOpen(false)
       }
     }
@@ -54,19 +54,20 @@ function DropdownMenuTrigger({ children, asChild, className, ...props }: React.C
     }
   }, [open, setOpen])
 
+  const handleClick = () => setOpen(!open)
+
   if (asChild && React.isValidElement(children)) {
-    return React.cloneElement(children as React.ReactElement<{ onClick?: () => void; ref?: React.Ref<HTMLButtonElement> }>, {
-      onClick: () => setOpen(!open),
-      ref,
+    return React.cloneElement(children as React.ReactElement<{ onClick?: () => void }>, {
+      onClick: handleClick,
     })
   }
 
   return (
     <button
-      ref={ref}
+      ref={triggerRef as React.RefObject<HTMLButtonElement>}
       type="button"
       className={className}
-      onClick={() => setOpen(!open)}
+      onClick={handleClick}
       aria-expanded={open}
       {...props}
     >
