@@ -35,7 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const signUp = async (email: string, password: string, fullName: string) => {
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -44,6 +44,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
       },
     })
+
+    // Supabase returns a user with empty identities if email already exists
+    // (when email confirmation is enabled, to prevent email enumeration)
+    if (!error && data.user && (!data.user.identities || data.user.identities.length === 0)) {
+      return {
+        error: {
+          message: 'User already registered',
+          name: 'AuthApiError',
+          status: 400,
+        } as import('@supabase/supabase-js').AuthError,
+      }
+    }
+
     return { error }
   }
 
