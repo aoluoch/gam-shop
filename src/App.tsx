@@ -14,6 +14,13 @@ import {
   OrdersPage,
   CheckoutPage,
   OrderSuccessPage,
+  AdminDashboardPage,
+  AdminProductsPage,
+  AdminProductFormPage,
+  AdminOrdersPage,
+  AdminOrderDetailPage,
+  AdminCustomersPage,
+  AdminSettingsPage,
 } from '@/pages';
 import { AuthProvider } from '@/context/AuthContext';
 import { CartProvider } from '@/context/CartContext';
@@ -175,14 +182,6 @@ function GuestRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-function AdminDashboard() {
-  return (
-    <div className="container mx-auto px-4 py-12">
-      <h1 className="text-3xl font-bold text-primary mb-4">Admin Dashboard</h1>
-      <p className="text-muted-foreground">Manage your store.</p>
-    </div>
-  );
-}
 
 function WishlistPage() {
   return (
@@ -223,7 +222,14 @@ function AppRoutes() {
         <Route path={ROUTES.WISHLIST} element={<ProtectedRoute><WishlistPage /></ProtectedRoute>} />
         
         {/* Admin routes (require admin role) */}
-        <Route path={ROUTES.ADMIN} element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+        <Route path={ROUTES.ADMIN} element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
+        <Route path={ROUTES.ADMIN_PRODUCTS} element={<AdminRoute><AdminProductsPage /></AdminRoute>} />
+        <Route path={`${ROUTES.ADMIN_PRODUCTS}/new`} element={<AdminRoute><AdminProductFormPage /></AdminRoute>} />
+        <Route path={`${ROUTES.ADMIN_PRODUCTS}/:id/edit`} element={<AdminRoute><AdminProductFormPage /></AdminRoute>} />
+        <Route path={ROUTES.ADMIN_ORDERS} element={<AdminRoute><AdminOrdersPage /></AdminRoute>} />
+        <Route path={`${ROUTES.ADMIN_ORDERS}/:id`} element={<AdminRoute><AdminOrderDetailPage /></AdminRoute>} />
+        <Route path={ROUTES.ADMIN_CUSTOMERS} element={<AdminRoute><AdminCustomersPage /></AdminRoute>} />
+        <Route path={ROUTES.ADMIN_SETTINGS} element={<AdminRoute><AdminSettingsPage /></AdminRoute>} />
       </Route>
     </Routes>
   );

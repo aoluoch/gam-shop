@@ -1,0 +1,340 @@
+import { supabase } from './supabase'
+import type { Product } from '@/types/product'
+import type { Order, OrderStatus, PaymentStatus } from '@/types/order'
+import type { UserProfile, UserRole } from '@/types/user'
+
+// ============================================
+// DASHBOARD STATS
+// ============================================
+
+export interface DashboardStats {
+  totalRevenue: number
+  totalOrders: number
+  totalCustomers: number
+  totalProducts: number
+  recentOrders: Order[]
+  lowStockProducts: Product[]
+}
+
+export async function getDashboardStats(): Promise<DashboardStats> {
+  const [ordersResult, customersResult, productsResult, lowStockResult] = await Promise.all([
+    supabase.from('orders').select('*').order('created_at', { ascending: false }),
+    supabase.from('profiles').select('id').eq('role', 'customer'),
+    supabase.from('products').select('*').eq('is_active', true),
+    supabase.from('products').select('*').lt('stock', 10).eq('is_active', true),
+  ])
+
+  const orders = ordersResult.data || []
+  const totalRevenue = orders
+    .filter(o => o.payment_status === 'paid')
+    .reduce((sum, o) => sum + Number(o.total), 0)
+
+  return {
+    totalRevenue,
+    totalOrders: orders.length,
+    totalCustomers: customersResult.data?.length || 0,
+    totalProducts: productsResult.data?.length || 0,
+    recentOrders: orders.slice(0, 5).map(mapOrder),
+    lowStockProducts: (lowStockResult.data || []).map(mapProduct),
+  }
+}
+
+// ============================================
+// PRODUCTS MANAGEMENT
+// ============================================
+
+export async function getProducts(): Promise<Product[]> {
+  const { data, error } = await supabase
+    .from('products')
+    .select('*')
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('Error fetching products:', error)
+    return []
+  }
+
+  return data.map(mapProduct)
+}
+
+export async function getProductById(id: string): Promise<Product | null> {
+  const { data, error } = await supabase
+    .from('products')
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  if (error) {
+    console.error('Error fetching product:', error)
+    return null
+  }
+
+  return mapProduct(data)
+}
+
+export async function createProduct(
+  product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>
+): Promise<{ data: Product | null; error: Error | null }> {
+  const { data, error } = await supabase
+    .from('products')
+    .insert({
+      name: product.name,
+      description: product.description,
+      price: product.price,
+      compare_at_price: product.compareAtPrice,
+      category: product.category,
+      subcategory: product.subcategory,
+      images: product.images,
+      thumbnail: product.thumbnail,
+      stock: product.stock,
+      sku: product.sku,
+      featured: product.featured,
+      author: product.author,
+      size: product.size,
+      color: product.color,
+      is_active: true,
+    })
+    .select()
+    .single()
+
+  if (error) {
+    return { data: null, error: new Error(error.message) }
+  }
+
+  return { data: mapProduct(data), error: null }
+}
+
+export async function updateProduct(
+  id: string,
+  updates: Partial<Omit<Product, 'id' | 'createdAt' | 'updatedAt'>>
+): Promise<{ error: Error | null }> {
+  const updateData: Record<string, unknown> = {}
+  
+  if (updates.name !== undefined) updateData.name = updates.name
+  if (updates.description !== undefined) updateData.description = updates.description
+  if (updates.price !== undefined) updateData.price = updates.price
+  if (updates.compareAtPrice !== undefined) updateData.compare_at_price = updates.compareAtPrice
+  if (updates.category !== undefined) updateData.category = updates.category
+  if (updates.subcategory !== undefined) updateData.subcategory = updates.subcategory
+  if (updates.images !== undefined) updateData.images = updates.images
+  if (updates.thumbnail !== undefined) updateData.thumbnail = updates.thumbnail
+  if (updates.stock !== undefined) updateData.stock = updates.stock
+  if (updates.sku !== undefined) updateData.sku = updates.sku
+  if (updates.featured !== undefined) updateData.featured = updates.featured
+  if (updates.author !== undefined) updateData.author = updates.author
+  if (updates.size !== undefined) updateData.size = updates.size
+  if (updates.color !== undefined) updateData.color = updates.color
+
+  const { error } = await supabase
+    .from('products')
+    .update(updateData)
+    .eq('id', id)
+
+  return { error: error ? new Error(error.message) : null }
+}
+
+export async function deleteProduct(id: string): Promise<{ error: Error | null }> {
+  const { error } = await supabase
+    .from('products')
+    .update({ is_active: false })
+    .eq('id', id)
+
+  return { error: error ? new Error(error.message) : null }
+}
+
+// ============================================
+// ORDERS MANAGEMENT
+// ============================================
+
+export async function getOrders(): Promise<Order[]> {
+  const { data, error } = await supabase
+    .from('orders')
+    .select(`
+      *,
+      order_items (*)
+    `)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('Error fetching orders:', error)
+    return []
+  }
+
+  return data.map(mapOrder)
+}
+
+export async function getOrderById(id: string): Promise<Order | null> {
+  const { data, error } = await supabase
+    .from('orders')
+    .select(`
+      *,
+      order_items (*)
+    `)
+    .eq('id', id)
+    .single()
+
+  if (error) {
+    console.error('Error fetching order:', error)
+    return null
+  }
+
+  return mapOrder(data)
+}
+
+export async function updateOrderStatus(
+  id: string,
+  status: OrderStatus
+): Promise<{ error: Error | null }> {
+  const { error } = await supabase
+    .from('orders')
+    .update({ status })
+    .eq('id', id)
+
+  return { error: error ? new Error(error.message) : null }
+}
+
+export async function updatePaymentStatus(
+  id: string,
+  paymentStatus: PaymentStatus
+): Promise<{ error: Error | null }> {
+  const { error } = await supabase
+    .from('orders')
+    .update({ payment_status: paymentStatus })
+    .eq('id', id)
+
+  return { error: error ? new Error(error.message) : null }
+}
+
+// ============================================
+// CUSTOMERS MANAGEMENT
+// ============================================
+
+export interface CustomerWithOrders extends UserProfile {
+  email: string
+  orderCount: number
+  totalSpent: number
+}
+
+export async function getCustomers(): Promise<CustomerWithOrders[]> {
+  const { data: profiles, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('Error fetching customers:', error)
+    return []
+  }
+
+  // Get order stats for each customer
+  const customerIds = profiles.map(p => p.id)
+  const { data: orders } = await supabase
+    .from('orders')
+    .select('user_id, total, payment_status')
+    .in('user_id', customerIds)
+
+  const orderStats = new Map<string, { count: number; spent: number }>()
+  orders?.forEach(order => {
+    const stats = orderStats.get(order.user_id) || { count: 0, spent: 0 }
+    stats.count += 1
+    if (order.payment_status === 'paid') {
+      stats.spent += Number(order.total)
+    }
+    orderStats.set(order.user_id, stats)
+  })
+
+  // Get user emails from auth.users (requires admin access)
+  const { data: users } = await supabase.auth.admin.listUsers()
+  const emailMap = new Map<string, string>()
+  users?.users?.forEach(user => {
+    emailMap.set(user.id, user.email || '')
+  })
+
+  return profiles.map(profile => {
+    const stats = orderStats.get(profile.id) || { count: 0, spent: 0 }
+    return {
+      id: profile.id,
+      fullName: profile.full_name,
+      avatarUrl: profile.avatar_url,
+      phone: profile.phone,
+      role: profile.role || 'customer',
+      createdAt: profile.created_at,
+      updatedAt: profile.updated_at,
+      email: emailMap.get(profile.id) || '',
+      orderCount: stats.count,
+      totalSpent: stats.spent,
+    }
+  })
+}
+
+export async function updateUserRole(
+  userId: string,
+  role: UserRole
+): Promise<{ error: Error | null }> {
+  const { error } = await supabase
+    .from('profiles')
+    .update({ role })
+    .eq('id', userId)
+
+  return { error: error ? new Error(error.message) : null }
+}
+
+// ============================================
+// HELPER MAPPERS
+// ============================================
+
+function mapProduct(data: Record<string, unknown>): Product {
+  return {
+    id: data.id as string,
+    name: data.name as string,
+    description: data.description as string,
+    price: Number(data.price),
+    compareAtPrice: data.compare_at_price ? Number(data.compare_at_price) : undefined,
+    category: data.category as 'books' | 'apparel' | 'accessories',
+    subcategory: data.subcategory as string | undefined,
+    images: (data.images as string[]) || [],
+    thumbnail: data.thumbnail as string,
+    stock: Number(data.stock),
+    sku: data.sku as string,
+    featured: Boolean(data.featured),
+    author: data.author as string | undefined,
+    size: data.size as string | undefined,
+    color: data.color as string | undefined,
+    createdAt: data.created_at as string,
+    updatedAt: data.updated_at as string,
+  }
+}
+
+function mapOrder(data: Record<string, unknown>): Order {
+  const items = (data.order_items as Record<string, unknown>[] || []).map(item => ({
+    id: item.id as string,
+    orderId: item.order_id as string,
+    productId: item.product_id as string,
+    productName: item.product_name as string,
+    productImage: item.product_image as string,
+    quantity: Number(item.quantity),
+    price: Number(item.price),
+    size: item.size as string | undefined,
+    color: item.color as string | undefined,
+  }))
+
+  return {
+    id: data.id as string,
+    userId: data.user_id as string,
+    orderNumber: data.order_number as string,
+    items,
+    shippingAddress: data.shipping_address as Order['shippingAddress'],
+    billingAddress: data.billing_address as Order['billingAddress'],
+    subtotal: Number(data.subtotal),
+    shipping: Number(data.shipping),
+    tax: Number(data.tax),
+    total: Number(data.total),
+    status: data.status as OrderStatus,
+    paymentStatus: data.payment_status as PaymentStatus,
+    paymentMethod: data.payment_method as string,
+    paymentReference: data.payment_reference as string | undefined,
+    notes: data.notes as string | undefined,
+    createdAt: data.created_at as string,
+    updatedAt: data.updated_at as string,
+  }
+}

@@ -1,0 +1,7 @@
+export { DashboardPage as AdminDashboardPage } from './DashboardPage'
+export { ProductsPage as AdminProductsPage } from './ProductsPage'
+export { ProductFormPage as AdminProductFormPage } from './ProductFormPage'
+export { OrdersPage as AdminOrdersPage } from './OrdersPage'
+export { OrderDetailPage as AdminOrderDetailPage } from './OrderDetailPage'
+export { CustomersPage as AdminCustomersPage } from './CustomersPage'
+export { SettingsPage as AdminSettingsPage } from './SettingsPage'

@@ -8,3 +8,12 @@ export { CartPage } from './Cart';
 export { AccountPage, OrdersPage } from './Account';
 export { CheckoutPage } from './Checkout';
 export { OrderSuccessPage } from './OrderSuccess';
+export {
+  AdminDashboardPage,
+  AdminProductsPage,
+  AdminProductFormPage,
+  AdminOrdersPage,
+  AdminOrderDetailPage,
+  AdminCustomersPage,
+  AdminSettingsPage,
+} from './Admin';
