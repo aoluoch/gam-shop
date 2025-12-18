@@ -1,13 +1,12 @@
-import { createContext, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
-import type { CartItem, CartContextType } from '@/types/cart'
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import type { CartItem } from '@/types/cart'
 import type { Product } from '@/types/product'
+import { CartContext } from './CartContextDef'
 
 const CART_STORAGE_KEY = 'gam-shop-cart'
 const SHIPPING_THRESHOLD = 5000 // Free shipping over KES 5000
 const SHIPPING_COST = 350 // KES
 const TAX_RATE = 0.16 // 16% VAT
-
-export const CartContext = createContext<CartContextType | undefined>(undefined)
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>(() => {

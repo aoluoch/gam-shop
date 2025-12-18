@@ -1,4 +1,5 @@
-import { ShoppingCart } from 'lucide-react'
+import { ShoppingCart, Heart, Eye } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { useCart } from '@/hooks/useCart'
@@ -75,14 +76,29 @@ export function ProductCard({ product }: ProductCardProps) {
             </span>
           )}
         </div>
-        <Button
-          className="w-full"
-          variant={inCart ? 'secondary' : 'default'}
-          onClick={handleAddToCart}
-        >
-          <ShoppingCart className="mr-2 h-4 w-4" />
-          {inCart ? 'Add More' : 'Add to Cart'}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            className="flex-1"
+            variant={inCart ? 'secondary' : 'default'}
+            onClick={handleAddToCart}
+          >
+            <ShoppingCart className="mr-2 h-4 w-4" />
+            {inCart ? 'Add More' : 'Add to Cart'}
+          </Button>
+          <Button
+            size="icon"
+            variant="outline"
+            onClick={(e) => e.preventDefault()}
+            title="Add to Wishlist"
+          >
+            <Heart className="h-4 w-4" />
+          </Button>
+          <Link to={`/product/${product.id}`} onClick={(e) => e.stopPropagation()}>
+            <Button size="icon" variant="outline" title="Quick View">
+              <Eye className="h-4 w-4" />
+            </Button>
+          </Link>
+        </div>
       </CardContent>
     </Card>
   )

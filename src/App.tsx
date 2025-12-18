@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { MainLayout } from '@/components/layout';
+import { ScrollToTop } from '@/components/common/ScrollToTop';
 import { ROUTES } from '@/constants/routes';
 import { 
   PrivacyPolicyPage, 
@@ -231,6 +232,7 @@ function AppRoutes() {
 function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <ToastProvider>
         <AuthProvider>
           <CartProvider>
