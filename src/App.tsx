@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { MainLayout, AdminLayout } from '@/components/layout';
 import { ScrollToTop } from '@/components/common/ScrollToTop';
@@ -31,9 +32,11 @@ import { ToastProvider } from '@/context/ToastContext';
 import { useAuth } from '@/hooks/useAuth';
 import { useAdmin } from '@/hooks/useAdmin';
 import { ProductCard } from '@/components/product';
-import { SAMPLE_PRODUCTS } from '@/constants/products';
+import { getProducts, getProductsByCategory } from '@/services/product.service';
+import type { Product } from '@/types/product';
 import { HeroSection, FeaturedProducts, CategorySection, TestimonialsSection } from '@/components/home';
 import { ContactForm } from '@/components/contact';
+import { Loader2 } from 'lucide-react';
 
 // Placeholder pages - will be replaced with actual page components
 function HomePage() {
@@ -48,60 +51,153 @@ function HomePage() {
 }
 
 function ShopPage() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getProducts().then(data => {
+      setProducts(data);
+      setLoading(false);
+    });
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-12 flex items-center justify-center min-h-[40vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-12">
       <h1 className="text-3xl font-bold text-primary mb-4">Shop All Products</h1>
       <p className="text-muted-foreground mb-8">Browse our collection of books, apparel, and accessories.</p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {SAMPLE_PRODUCTS.map(product => (
-          <ProductCard key={product.id} product={product} />
-        ))}
-      </div>
+      {products.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">No products available at the moment.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {products.map(product => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
 function BooksPage() {
-  const books = SAMPLE_PRODUCTS.filter(p => p.category === 'books');
+  const [books, setBooks] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getProductsByCategory('books').then(data => {
+      setBooks(data);
+      setLoading(false);
+    });
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-12 flex items-center justify-center min-h-[40vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-12">
       <h1 className="text-3xl font-bold text-primary mb-4">Books</h1>
       <p className="text-muted-foreground mb-8">Spiritual books by Apostle David Owusu and Rev. Eunice.</p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {books.map(product => (
-          <ProductCard key={product.id} product={product} />
-        ))}
-      </div>
+      {books.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">No books available at the moment.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {books.map(product => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
 function ApparelPage() {
-  const apparel = SAMPLE_PRODUCTS.filter(p => p.category === 'apparel');
+  const [apparel, setApparel] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getProductsByCategory('apparel').then(data => {
+      setApparel(data);
+      setLoading(false);
+    });
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-12 flex items-center justify-center min-h-[40vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-12">
       <h1 className="text-3xl font-bold text-primary mb-4">Apparel</h1>
       <p className="text-muted-foreground mb-8">T-shirts in various sizes and colors.</p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {apparel.map(product => (
-          <ProductCard key={product.id} product={product} />
-        ))}
-      </div>
+      {apparel.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">No apparel available at the moment.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {apparel.map(product => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
 function AccessoriesPage() {
-  const accessories = SAMPLE_PRODUCTS.filter(p => p.category === 'accessories');
+  const [accessories, setAccessories] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getProductsByCategory('accessories').then(data => {
+      setAccessories(data);
+      setLoading(false);
+    });
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-12 flex items-center justify-center min-h-[40vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-12">
       <h1 className="text-3xl font-bold text-primary mb-4">Accessories</h1>
       <p className="text-muted-foreground mb-8">Caps and rubber bands.</p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {accessories.map(product => (
-          <ProductCard key={product.id} product={product} />
-        ))}
-      </div>
+      {accessories.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">No accessories available at the moment.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {accessories.map(product => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

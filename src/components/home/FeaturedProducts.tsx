@@ -1,12 +1,38 @@
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ProductCard } from '@/components/product'
-import { SAMPLE_PRODUCTS } from '@/constants/products'
+import { getFeaturedProducts } from '@/services/product.service'
+import type { Product } from '@/types/product'
 import { ROUTES } from '@/constants/routes'
 
 export function FeaturedProducts() {
-  const featuredProducts = SAMPLE_PRODUCTS.filter(p => p.featured).slice(0, 4)
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    getFeaturedProducts().then(data => {
+      setFeaturedProducts(data)
+      setLoading(false)
+    })
+  }, [])
+
+  if (loading) {
+    return (
+      <section className="py-16">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-center min-h-[300px]">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  if (featuredProducts.length === 0) {
+    return null
+  }
 
   return (
     <section className="py-16">

@@ -2,10 +2,14 @@ import { useState } from 'react'
 import { Loader2, Lock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useCart } from '@/hooks/useCart'
+import { createOrder, type CreateOrderInput } from '@/services/order.service'
+import type { ShippingData } from './ShippingForm'
 
 interface PaystackButtonProps {
   email: string
+  shippingData: ShippingData
   onSuccess: (reference: string) => void
+  onError: (error: string) => void
   className?: string
 }
 
@@ -27,11 +31,15 @@ interface PaystackConfig {
   callback: (response: { reference: string }) => void
 }
 
-export function PaystackButton({ email, onSuccess, className }: PaystackButtonProps) {
-  const { total } = useCart()
+export function PaystackButton({ email, shippingData, onSuccess, onError, className }: PaystackButtonProps) {
+  const { items, subtotal, shipping, tax, total } = useCart()
   const [loading, setLoading] = useState(false)
 
-  const publicKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || 'pk_test_xxxxxxxxxxxxx'
+  const publicKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY
+
+  if (!publicKey) {
+    console.error('Paystack public key is not configured')
+  }
 
   const generateReference = () => {
     const timestamp = Date.now()
@@ -40,6 +48,16 @@ export function PaystackButton({ email, onSuccess, className }: PaystackButtonPr
   }
 
   const handlePayment = () => {
+    if (!publicKey) {
+      onError('Payment gateway is not configured. Please contact support.')
+      return
+    }
+
+    if (items.length === 0) {
+      onError('Your cart is empty.')
+      return
+    }
+
     setLoading(true)
 
     // Check if Paystack is loaded
@@ -51,7 +69,7 @@ export function PaystackButton({ email, onSuccess, className }: PaystackButtonPr
       script.onload = () => initializePayment()
       script.onerror = () => {
         setLoading(false)
-        alert('Failed to load payment gateway. Please try again.')
+        onError('Failed to load payment gateway. Please try again.')
       }
       document.body.appendChild(script)
     } else {
@@ -65,22 +83,65 @@ export function PaystackButton({ email, onSuccess, className }: PaystackButtonPr
       return
     }
 
+    const reference = generateReference()
+
     const handler = window.PaystackPop.setup({
       key: publicKey,
       email: email,
       amount: total * 100, // Paystack expects amount in kobo/cents
       currency: 'KES',
-      ref: generateReference(),
+      ref: reference,
       onClose: () => {
         setLoading(false)
       },
-      callback: (response) => {
-        setLoading(false)
-        onSuccess(response.reference)
+      callback: async (response) => {
+        // Payment was successful, now create the order
+        await handlePaymentSuccess(response.reference)
       },
     })
 
     handler.openIframe()
+  }
+
+  const handlePaymentSuccess = async (reference: string) => {
+    try {
+      // Create order only after payment is confirmed
+      const orderInput: CreateOrderInput = {
+        items,
+        shippingAddress: {
+          fullName: shippingData.fullName,
+          email: shippingData.email,
+          phone: shippingData.phone,
+          addressLine1: shippingData.addressLine1,
+          addressLine2: shippingData.addressLine2,
+          city: shippingData.city,
+          state: shippingData.state,
+          postalCode: shippingData.postalCode,
+          country: shippingData.country,
+        },
+        subtotal,
+        shipping,
+        tax,
+        total,
+        paymentMethod: 'paystack',
+        paymentReference: reference,
+      }
+
+      const result = await createOrder(orderInput)
+
+      if (result.success) {
+        setLoading(false)
+        onSuccess(reference)
+      } else {
+        setLoading(false)
+        // Payment succeeded but order creation failed
+        // This is a critical error - payment was taken but order wasn't created
+        onError(`Payment successful but order creation failed: ${result.error}. Please contact support with reference: ${reference}`)
+      }
+    } catch {
+      setLoading(false)
+      onError(`An error occurred while creating your order. Reference: ${reference}. Please contact support.`)
+    }
   }
 
   const formatPrice = (price: number) => {
@@ -94,7 +155,7 @@ export function PaystackButton({ email, onSuccess, className }: PaystackButtonPr
   return (
     <Button
       onClick={handlePayment}
-      disabled={loading || total === 0}
+      disabled={loading || total === 0 || !publicKey}
       size="lg"
       className={className}
     >

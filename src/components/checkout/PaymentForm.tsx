@@ -1,4 +1,5 @@
-import { CreditCard, Shield, ArrowLeft } from 'lucide-react'
+import { useState } from 'react'
+import { CreditCard, Shield, ArrowLeft, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { PaystackButton } from './PaystackButton'
@@ -11,6 +12,17 @@ interface PaymentFormProps {
 }
 
 export function PaymentForm({ shippingData, onBack, onSuccess }: PaymentFormProps) {
+  const [error, setError] = useState<string | null>(null)
+
+  const handleError = (errorMessage: string) => {
+    setError(errorMessage)
+  }
+
+  const handleSuccess = (reference: string) => {
+    setError(null)
+    onSuccess(reference)
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -20,6 +32,13 @@ export function PaymentForm({ shippingData, onBack, onSuccess }: PaymentFormProp
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
+        {error && (
+          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+            <div className="text-sm text-destructive">{error}</div>
+          </div>
+        )}
+
         <div className="bg-muted/50 rounded-lg p-4 space-y-2">
           <h4 className="font-medium text-sm">Shipping to:</h4>
           <p className="text-sm text-muted-foreground">
@@ -45,8 +64,8 @@ export function PaymentForm({ shippingData, onBack, onSuccess }: PaymentFormProp
               <span className="text-sm font-medium">Pay with Paystack</span>
               <div className="flex items-center gap-2">
                 <img 
-                  src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Stripe_Logo%2C_revised_2016.svg/512px-Stripe_Logo%2C_revised_2016.svg.png" 
-                  alt="Card payments"
+                  src="https://website-v3-assets.s3.amazonaws.com/assets/img/hero/Paystack-mark-white-twitter.png" 
+                  alt="Paystack"
                   className="h-6"
                 />
               </div>
@@ -69,7 +88,9 @@ export function PaymentForm({ shippingData, onBack, onSuccess }: PaymentFormProp
           </Button>
           <PaystackButton
             email={shippingData.email}
-            onSuccess={onSuccess}
+            shippingData={shippingData}
+            onSuccess={handleSuccess}
+            onError={handleError}
             className="flex-1"
           />
         </div>
