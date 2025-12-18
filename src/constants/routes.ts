@@ -28,6 +28,7 @@ export const ROUTES = {
   ADMIN_ORDERS: '/admin/orders',
   ADMIN_CUSTOMERS: '/admin/customers',
   ADMIN_CATEGORIES: '/admin/categories',
+  ADMIN_MESSAGES: '/admin/messages',
   ADMIN_SETTINGS: '/admin/settings',
 } as const;
 
@@ -51,5 +52,6 @@ export const ADMIN_NAV_LINKS = [
   { label: 'Orders', href: ROUTES.ADMIN_ORDERS },
   { label: 'Customers', href: ROUTES.ADMIN_CUSTOMERS },
   { label: 'Categories', href: ROUTES.ADMIN_CATEGORIES },
+  { label: 'Messages', href: ROUTES.ADMIN_MESSAGES },
   { label: 'Settings', href: ROUTES.ADMIN_SETTINGS },
 ] as const;

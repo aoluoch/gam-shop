@@ -22,6 +22,7 @@ import {
   AdminCustomersPage,
   AdminSettingsPage,
   AdminCategoriesPage,
+  AdminContactMessagesPage,
 } from '@/pages';
 import { AuthProvider } from '@/context/AuthContext';
 import { CartProvider } from '@/context/CartContext';
@@ -31,6 +32,7 @@ import { useAdmin } from '@/hooks/useAdmin';
 import { ProductCard } from '@/components/product';
 import { SAMPLE_PRODUCTS } from '@/constants/products';
 import { HeroSection, FeaturedProducts, CategorySection, TestimonialsSection } from '@/components/home';
+import { ContactForm } from '@/components/contact';
 
 // Placeholder pages - will be replaced with actual page components
 function HomePage() {
@@ -115,8 +117,14 @@ function AboutPage() {
 function ContactPage() {
   return (
     <div className="container mx-auto px-4 py-12">
-      <h1 className="text-3xl font-bold text-primary mb-4">Contact Us</h1>
-      <p className="text-muted-foreground">Get in touch with us.</p>
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-bold text-primary mb-4">Contact Us</h1>
+        <p className="text-muted-foreground max-w-2xl mx-auto">
+          Have questions about our products or ministry? We'd love to hear from you. 
+          Fill out the form below and we'll get back to you as soon as possible.
+        </p>
+      </div>
+      <ContactForm />
     </div>
   );
 }
@@ -234,6 +242,7 @@ function AppRoutes() {
         <Route path={`${ROUTES.ADMIN_ORDERS}/:id`} element={<AdminOrderDetailPage />} />
         <Route path={ROUTES.ADMIN_CUSTOMERS} element={<AdminCustomersPage />} />
         <Route path={ROUTES.ADMIN_CATEGORIES} element={<AdminCategoriesPage />} />
+        <Route path={ROUTES.ADMIN_MESSAGES} element={<AdminContactMessagesPage />} />
         <Route path={ROUTES.ADMIN_SETTINGS} element={<AdminSettingsPage />} />
       </Route>
     </Routes>
