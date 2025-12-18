@@ -13,15 +13,15 @@ export function SettingsPage() {
   const [storeSettings, setStoreSettings] = useState({
     storeName: 'GAM Shop',
     storeEmail: 'info@gamshop.com',
-    storePhone: '+1 (555) 123-4567',
-    currency: 'USD',
-    taxRate: '8.5',
+    storePhone: '+254 700 000 000',
+    currency: 'KES',
+    taxRate: '16',
   })
 
   const [shippingSettings, setShippingSettings] = useState({
-    freeShippingThreshold: '50',
-    standardShippingRate: '5.99',
-    expressShippingRate: '12.99',
+    freeShippingThreshold: '5000',
+    standardShippingRate: '300',
+    expressShippingRate: '500',
   })
 
   async function handleSaveStore(e: React.FormEvent) {
@@ -112,10 +112,10 @@ export function SettingsPage() {
                     }
                     className="w-full px-3 py-2 border rounded-md text-sm"
                   >
+                    <option value="KES">KES (KSh)</option>
                     <option value="USD">USD ($)</option>
                     <option value="EUR">EUR (€)</option>
                     <option value="GBP">GBP (£)</option>
-                    <option value="KES">KES (KSh)</option>
                   </select>
                 </div>
 
@@ -154,7 +154,7 @@ export function SettingsPage() {
           <CardContent>
             <form onSubmit={handleSaveShipping} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="freeShippingThreshold">Free Shipping Threshold ($)</Label>
+                <Label htmlFor="freeShippingThreshold">Free Shipping Threshold (KSh)</Label>
                 <Input
                   id="freeShippingThreshold"
                   type="number"
@@ -175,7 +175,7 @@ export function SettingsPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="standardShippingRate">Standard Shipping ($)</Label>
+                  <Label htmlFor="standardShippingRate">Standard Shipping (KSh)</Label>
                   <Input
                     id="standardShippingRate"
                     type="number"
@@ -192,7 +192,7 @@ export function SettingsPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="expressShippingRate">Express Shipping ($)</Label>
+                  <Label htmlFor="expressShippingRate">Express Shipping (KSh)</Label>
                   <Input
                     id="expressShippingRate"
                     type="number"

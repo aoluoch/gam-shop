@@ -134,7 +134,7 @@ export function CustomerTable({ customers, onRoleChange, loading }: CustomerTabl
                     </td>
                     <td className="py-3 px-4 text-right">{customer.orderCount}</td>
                     <td className="py-3 px-4 text-right font-medium">
-                      ${customer.totalSpent.toFixed(2)}
+                      KSh {customer.totalSpent.toLocaleString()}
                     </td>
                     <td className="py-3 px-4">
                       <div className="flex items-center justify-end">

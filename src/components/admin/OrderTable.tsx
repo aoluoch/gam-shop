@@ -182,7 +182,7 @@ export function OrderTable({ orders, onStatusChange, onPaymentStatusChange, load
                       )}
                     </td>
                     <td className="py-3 px-4 text-right font-medium">
-                      ${order.total.toFixed(2)}
+                      KSh {order.total.toLocaleString()}
                     </td>
                     <td className="py-3 px-4">
                       <div className="flex items-center justify-end">

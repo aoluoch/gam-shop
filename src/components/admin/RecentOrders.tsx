@@ -59,7 +59,7 @@ export function RecentOrders({ orders, loading }: RecentOrdersProps) {
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="font-medium">${order.total.toFixed(2)}</p>
+                  <p className="font-medium">KSh {order.total.toLocaleString()}</p>
                   <span
                     className={cn(
                       'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium capitalize',

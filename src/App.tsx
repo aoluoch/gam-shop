@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { MainLayout } from '@/components/layout';
+import { MainLayout, AdminLayout } from '@/components/layout';
 import { ScrollToTop } from '@/components/common/ScrollToTop';
 import { ROUTES } from '@/constants/routes';
 import { 
@@ -195,6 +195,7 @@ function WishlistPage() {
 function AppRoutes() {
   return (
     <Routes>
+      {/* Main site routes */}
       <Route element={<MainLayout />}>
         {/* Public routes */}
         <Route path={ROUTES.HOME} element={<HomePage />} />
@@ -220,16 +221,18 @@ function AppRoutes() {
         <Route path={ROUTES.ACCOUNT} element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
         <Route path={ROUTES.ORDERS} element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
         <Route path={ROUTES.WISHLIST} element={<ProtectedRoute><WishlistPage /></ProtectedRoute>} />
-        
-        {/* Admin routes (require admin role) */}
-        <Route path={ROUTES.ADMIN} element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
-        <Route path={ROUTES.ADMIN_PRODUCTS} element={<AdminRoute><AdminProductsPage /></AdminRoute>} />
-        <Route path={`${ROUTES.ADMIN_PRODUCTS}/new`} element={<AdminRoute><AdminProductFormPage /></AdminRoute>} />
-        <Route path={`${ROUTES.ADMIN_PRODUCTS}/:id/edit`} element={<AdminRoute><AdminProductFormPage /></AdminRoute>} />
-        <Route path={ROUTES.ADMIN_ORDERS} element={<AdminRoute><AdminOrdersPage /></AdminRoute>} />
-        <Route path={`${ROUTES.ADMIN_ORDERS}/:id`} element={<AdminRoute><AdminOrderDetailPage /></AdminRoute>} />
-        <Route path={ROUTES.ADMIN_CUSTOMERS} element={<AdminRoute><AdminCustomersPage /></AdminRoute>} />
-        <Route path={ROUTES.ADMIN_SETTINGS} element={<AdminRoute><AdminSettingsPage /></AdminRoute>} />
+      </Route>
+
+      {/* Admin routes with AdminLayout (sidebar navigation) */}
+      <Route element={<AdminRoute><AdminLayout /></AdminRoute>}>
+        <Route path={ROUTES.ADMIN} element={<AdminDashboardPage />} />
+        <Route path={ROUTES.ADMIN_PRODUCTS} element={<AdminProductsPage />} />
+        <Route path={`${ROUTES.ADMIN_PRODUCTS}/new`} element={<AdminProductFormPage />} />
+        <Route path={`${ROUTES.ADMIN_PRODUCTS}/:id/edit`} element={<AdminProductFormPage />} />
+        <Route path={ROUTES.ADMIN_ORDERS} element={<AdminOrdersPage />} />
+        <Route path={`${ROUTES.ADMIN_ORDERS}/:id`} element={<AdminOrderDetailPage />} />
+        <Route path={ROUTES.ADMIN_CUSTOMERS} element={<AdminCustomersPage />} />
+        <Route path={ROUTES.ADMIN_SETTINGS} element={<AdminSettingsPage />} />
       </Route>
     </Routes>
   );

@@ -216,6 +216,7 @@ export interface CustomerWithOrders extends UserProfile {
 }
 
 export async function getCustomers(): Promise<CustomerWithOrders[]> {
+  // Fetch all profiles with their emails
   const { data: profiles, error } = await supabase
     .from('profiles')
     .select('*')
@@ -223,6 +224,10 @@ export async function getCustomers(): Promise<CustomerWithOrders[]> {
 
   if (error) {
     console.error('Error fetching customers:', error)
+    return []
+  }
+
+  if (!profiles || profiles.length === 0) {
     return []
   }
 
@@ -243,24 +248,17 @@ export async function getCustomers(): Promise<CustomerWithOrders[]> {
     orderStats.set(order.user_id, stats)
   })
 
-  // Get user emails from auth.users (requires admin access)
-  const { data: users } = await supabase.auth.admin.listUsers()
-  const emailMap = new Map<string, string>()
-  users?.users?.forEach(user => {
-    emailMap.set(user.id, user.email || '')
-  })
-
   return profiles.map(profile => {
     const stats = orderStats.get(profile.id) || { count: 0, spent: 0 }
     return {
       id: profile.id,
-      fullName: profile.full_name,
+      fullName: profile.full_name || 'Unknown User',
       avatarUrl: profile.avatar_url,
       phone: profile.phone,
       role: profile.role || 'customer',
       createdAt: profile.created_at,
       updatedAt: profile.updated_at,
-      email: emailMap.get(profile.id) || '',
+      email: profile.email || '',
       orderCount: stats.count,
       totalSpent: stats.spent,
     }

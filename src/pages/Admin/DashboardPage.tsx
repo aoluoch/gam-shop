@@ -45,7 +45,7 @@ export function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
         <StatsCard
           title="Total Revenue"
-          value={`$${(stats?.totalRevenue || 0).toFixed(2)}`}
+          value={`KSh ${(stats?.totalRevenue || 0).toLocaleString()}`}
           icon={DollarSign}
           description="From paid orders"
         />

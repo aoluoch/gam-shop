@@ -103,11 +103,11 @@ export function OrderDetails({
                           {item.color && <span>Color: {item.color}</span>}
                         </div>
                         <p className="text-sm text-muted-foreground">
-                          Qty: {item.quantity} × ${item.price.toFixed(2)}
+                          Qty: {item.quantity} × KSh {item.price.toLocaleString()}
                         </p>
                       </div>
                       <p className="font-medium">
-                        ${(item.quantity * item.price).toFixed(2)}
+                        KSh {(item.quantity * item.price).toLocaleString()}
                       </p>
                     </div>
                   ))}
@@ -198,19 +198,19 @@ export function OrderDetails({
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Subtotal</span>
-                  <span>${order.subtotal.toFixed(2)}</span>
+                  <span>KSh {order.subtotal.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Shipping</span>
-                  <span>${order.shipping.toFixed(2)}</span>
+                  <span>KSh {order.shipping.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Tax</span>
-                  <span>${order.tax.toFixed(2)}</span>
+                  <span>KSh {order.tax.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between font-medium pt-2 border-t">
                   <span>Total</span>
-                  <span>${order.total.toFixed(2)}</span>
+                  <span>KSh {order.total.toLocaleString()}</span>
                 </div>
               </div>
             </CardContent>
