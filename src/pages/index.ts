@@ -19,4 +19,5 @@ export {
   AdminSettingsPage,
   AdminCategoriesPage,
   AdminContactMessagesPage,
+  AdminReviewsPage,
 } from './Admin';

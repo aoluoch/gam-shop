@@ -8,7 +8,8 @@ import {
   Settings,
   LogOut,
   ChevronLeft,
-  MessageSquare
+  MessageSquare,
+  Star
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -23,6 +24,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   'Orders': ShoppingCart,
   'Customers': Users,
   'Categories': FolderTree,
+  'Reviews': Star,
   'Messages': MessageSquare,
   'Settings': Settings,
 };

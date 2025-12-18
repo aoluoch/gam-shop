@@ -163,3 +163,54 @@ export async function deleteReview(reviewId: string): Promise<{ error: string | 
 
   return { error: null }
 }
+
+export interface AdminReview extends Review {
+  productName?: string
+  productImage?: string
+}
+
+export async function getAllReviews(): Promise<AdminReview[]> {
+  const { data, error } = await supabase
+    .from('product_reviews')
+    .select(`
+      *,
+      profiles:user_id (full_name),
+      products:product_id (name, images)
+    `)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('Error fetching all reviews:', error)
+    return []
+  }
+
+  return data.map((review) => ({
+    id: review.id,
+    productId: review.product_id,
+    userId: review.user_id,
+    rating: review.rating,
+    title: review.title,
+    comment: review.comment,
+    isVerifiedPurchase: review.is_verified_purchase,
+    isApproved: review.is_approved,
+    createdAt: review.created_at,
+    updatedAt: review.updated_at,
+    userFullName: review.profiles?.full_name || 'Anonymous',
+    productName: review.products?.name || 'Unknown Product',
+    productImage: review.products?.images?.[0] || null,
+  }))
+}
+
+export async function adminDeleteReview(reviewId: string): Promise<{ error: string | null }> {
+  const { error } = await supabase
+    .from('product_reviews')
+    .delete()
+    .eq('id', reviewId)
+
+  if (error) {
+    console.error('Error deleting review:', error)
+    return { error: 'Failed to delete review' }
+  }
+
+  return { error: null }
+}
