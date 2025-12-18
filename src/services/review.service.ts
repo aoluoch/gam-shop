@@ -32,6 +32,37 @@ export interface ProductRating {
   reviewCount: number
 }
 
+export async function getLatestReviews(limit: number = 3): Promise<Review[]> {
+  const { data, error } = await supabase
+    .from('product_reviews')
+    .select(`
+      *,
+      profiles:user_id (full_name)
+    `)
+    .eq('is_approved', true)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+
+  if (error) {
+    console.error('Error fetching latest reviews:', error)
+    return []
+  }
+
+  return data.map((review) => ({
+    id: review.id,
+    productId: review.product_id,
+    userId: review.user_id,
+    rating: review.rating,
+    title: review.title,
+    comment: review.comment,
+    isVerifiedPurchase: review.is_verified_purchase,
+    isApproved: review.is_approved,
+    createdAt: review.created_at,
+    updatedAt: review.updated_at,
+    userFullName: review.profiles?.full_name || 'Anonymous',
+  }))
+}
+
 export async function getProductReviews(productId: string): Promise<Review[]> {
   const { data, error } = await supabase
     .from('product_reviews')
