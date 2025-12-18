@@ -21,6 +21,7 @@ import {
   AdminOrderDetailPage,
   AdminCustomersPage,
   AdminSettingsPage,
+  AdminCategoriesPage,
 } from '@/pages';
 import { AuthProvider } from '@/context/AuthContext';
 import { CartProvider } from '@/context/CartContext';
@@ -232,6 +233,7 @@ function AppRoutes() {
         <Route path={ROUTES.ADMIN_ORDERS} element={<AdminOrdersPage />} />
         <Route path={`${ROUTES.ADMIN_ORDERS}/:id`} element={<AdminOrderDetailPage />} />
         <Route path={ROUTES.ADMIN_CUSTOMERS} element={<AdminCustomersPage />} />
+        <Route path={ROUTES.ADMIN_CATEGORIES} element={<AdminCategoriesPage />} />
         <Route path={ROUTES.ADMIN_SETTINGS} element={<AdminSettingsPage />} />
       </Route>
     </Routes>

@@ -16,4 +16,5 @@ export {
   AdminOrderDetailPage,
   AdminCustomersPage,
   AdminSettingsPage,
+  AdminCategoriesPage,
 } from './Admin';
