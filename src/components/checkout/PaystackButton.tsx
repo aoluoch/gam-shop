@@ -3,6 +3,7 @@ import { Loader2, Lock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useCart } from '@/hooks/useCart'
 import { createOrder, type CreateOrderInput } from '@/services/order.service'
+import { verifyPaystackPayment } from '@/services/payment.service'
 import type { ShippingData } from './ShippingForm'
 
 interface PaystackButtonProps {
@@ -105,7 +106,16 @@ export function PaystackButton({ email, shippingData, onSuccess, onError, classN
 
   const handlePaymentSuccess = async (reference: string) => {
     try {
-      // Create order only after payment is confirmed
+      // Verify payment with Supabase Edge Function before creating order
+      const verification = await verifyPaystackPayment(reference)
+      
+      if (!verification.success) {
+        setLoading(false)
+        onError(`Payment verification failed: ${verification.error}. Reference: ${reference}`)
+        return
+      }
+
+      // Create order only after payment is verified
       const orderInput: CreateOrderInput = {
         items,
         shippingAddress: {
