@@ -272,15 +272,48 @@ export function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold text-primary mb-4">15. Contact Information</h2>
+          <h2 className="text-2xl font-semibold text-primary mb-4">15. Customer Service</h2>
+          <p className="text-foreground/80 leading-relaxed mb-4">
+            We are committed to providing excellent customer service. Here's how we can help you:
+          </p>
+          
+          <h3 className="text-xl font-medium text-foreground mb-3">15.1 Order Tracking</h3>
+          <p className="text-foreground/80 leading-relaxed">
+            You can track your order status by logging into your account and viewing your order history. 
+            You will also receive email updates as your order progresses through processing, shipping, and delivery.
+          </p>
+
+          <h3 className="text-xl font-medium text-foreground mb-3 mt-6">15.2 Frequently Asked Questions</h3>
+          <p className="text-foreground/80 leading-relaxed">
+            For common questions about orders, payments, shipping, and returns, please visit our{' '}
+            <Link to={ROUTES.FAQ} className="text-primary hover:underline">FAQ page</Link>.
+          </p>
+
+          <h3 className="text-xl font-medium text-foreground mb-3 mt-6">15.3 Shipping Information</h3>
+          <p className="text-foreground/80 leading-relaxed">
+            For detailed information about our shipping areas, delivery times, and costs, please visit our{' '}
+            <Link to={ROUTES.SHIPPING} className="text-primary hover:underline">Shipping Info page</Link>.
+          </p>
+
+          <h3 className="text-xl font-medium text-foreground mb-3 mt-6">15.4 Returns & Refunds</h3>
+          <p className="text-foreground/80 leading-relaxed">
+            For our complete return and refund policy, eligibility requirements, and how to request a return, 
+            please visit our{' '}
+            <Link to={ROUTES.RETURNS} className="text-primary hover:underline">Returns & Refunds page</Link>.
+          </p>
+        </section>
+
+        <section>
+          <h2 className="text-2xl font-semibold text-primary mb-4">16. Contact Information</h2>
           <p className="text-foreground/80 leading-relaxed">
             If you have any questions about these Terms and Conditions, please contact us:
           </p>
           <div className="bg-muted p-6 rounded-lg mt-4">
-            <p className="text-foreground font-medium">GAM Shop</p>
-            <p className="text-foreground/80 mt-2">Email: support@gamshop.com</p>
-            <p className="text-foreground/80">Phone: +123 456 7890</p>
-            <p className="text-foreground/80">Address: 123 Ministry Street, City, Country</p>
+            <p className="text-foreground font-medium">Grace Arena Ministries</p>
+            <p className="text-foreground/80 mt-2">Email: gracearenakenya@gmail.com</p>
+            <p className="text-foreground/80">Phone: 0759 212574</p>
+            <p className="text-foreground/80">Address: Bungoma Road, off Baricho Road, Nairobi, Kenya</p>
+            <p className="text-foreground/80">Website: gracearenaministries.org</p>
           </div>
         </section>
 
@@ -292,6 +325,15 @@ export function TermsPage() {
           <div className="flex gap-4 mt-4">
             <Link to={ROUTES.PRIVACY} className="text-primary hover:underline">
               Privacy Policy
+            </Link>
+            <Link to={ROUTES.FAQ} className="text-primary hover:underline">
+              FAQ
+            </Link>
+            <Link to={ROUTES.SHIPPING} className="text-primary hover:underline">
+              Shipping Info
+            </Link>
+            <Link to={ROUTES.RETURNS} className="text-primary hover:underline">
+              Returns & Refunds
             </Link>
             <Link to={ROUTES.CONTACT} className="text-primary hover:underline">
               Contact Us

@@ -1,5 +1,8 @@
 export { PrivacyPolicyPage } from './PrivacyPolicyPage';
 export { TermsPage } from './TermsPage';
+export { FAQPage } from './FAQPage';
+export { ShippingPage } from './ShippingPage';
+export { ReturnsPage } from './ReturnsPage';
 export { LoginPage } from './LoginPage';
 export { RegisterPage } from './RegisterPage';
 export { ForgotPasswordPage } from './ForgotPasswordPage';

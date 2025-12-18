@@ -5,7 +5,10 @@ import { ScrollToTop } from '@/components/common/ScrollToTop';
 import { ROUTES } from '@/constants/routes';
 import { 
   PrivacyPolicyPage, 
-  TermsPage, 
+  TermsPage,
+  FAQPage,
+  ShippingPage,
+  ReturnsPage,
   LoginPage, 
   RegisterPage, 
   ForgotPasswordPage, 
@@ -318,6 +321,10 @@ function AppRoutes() {
         <Route path="/order-success" element={<OrderSuccessPage />} />
         <Route path={ROUTES.PRIVACY} element={<PrivacyPolicyPage />} />
         <Route path={ROUTES.TERMS} element={<TermsPage />} />
+        <Route path={ROUTES.FAQ} element={<FAQPage />} />
+        <Route path={ROUTES.SHIPPING} element={<ShippingPage />} />
+        <Route path={ROUTES.RETURNS} element={<ReturnsPage />} />
+        <Route path={ROUTES.ORDER_TRACK} element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
         
         {/* Guest-only routes (redirect if logged in) */}
         <Route path={ROUTES.LOGIN} element={<GuestRoute><LoginPage /></GuestRoute>} />
