@@ -8,6 +8,7 @@ import { useCart } from '@/hooks/useCart'
 import { useToast } from '@/hooks/useToast'
 import { supabase } from '@/services/supabase'
 import { cn } from '@/lib/utils'
+import { ReviewSection } from '@/components/product/ReviewSection'
 import type { Product, ProductVariant } from '@/types/product'
 
 export function ProductPage() {
@@ -460,6 +461,9 @@ export function ProductPage() {
           </div>
         </div>
       </div>
+
+      {/* Reviews Section */}
+      <ReviewSection productId={product.id} />
     </div>
   )
 }
