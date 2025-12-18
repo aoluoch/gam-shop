@@ -16,18 +16,49 @@ export interface Product {
   color?: string
   createdAt: string
   updatedAt: string
+  variants?: ProductVariant[]
+  hasVariants?: boolean
 }
 
 export interface ProductVariant {
   id: string
   productId: string
-  name: string
-  sku: string
-  price: number
+  size: string
+  color: string
   stock: number
-  size?: string
-  color?: string
+  skuSuffix?: string
+  priceAdjustment?: number
+  isActive: boolean
+  createdAt?: string
+  updatedAt?: string
 }
+
+export interface ProductImage {
+  id: string
+  productId: string
+  url: string
+  altText?: string
+  displayOrder: number
+  isThumbnail: boolean
+  createdAt?: string
+}
+
+export interface VariantFormData {
+  size: string
+  color: string
+  stock: number
+  skuSuffix?: string
+  priceAdjustment?: number
+}
+
+export const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'] as const
+export const COLORS = [
+  'Black', 'White', 'Navy', 'Gray', 'Red', 'Blue', 
+  'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Brown'
+] as const
+
+export type Size = typeof SIZES[number]
+export type Color = typeof COLORS[number]
 
 export type ProductCategory = 'books' | 'apparel' | 'accessories'
 

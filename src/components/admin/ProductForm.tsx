@@ -6,7 +6,9 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ROUTES } from '@/constants/routes'
-import type { Product, ProductCategory } from '@/types/product'
+import { ImageUploader } from './ImageUploader'
+import { VariantManager } from './VariantManager'
+import type { Product, ProductCategory, VariantFormData } from '@/types/product'
 
 interface ProductFormProps {
   product?: Product | null
@@ -29,6 +31,8 @@ export interface ProductFormData {
   author?: string
   size?: string
   color?: string
+  hasVariants?: boolean
+  variants?: VariantFormData[]
 }
 
 const CATEGORIES: { value: ProductCategory; label: string }[] = [
@@ -54,6 +58,14 @@ function getInitialFormData(product?: Product | null): ProductFormData {
       author: product.author || '',
       size: product.size || '',
       color: product.color || '',
+      hasVariants: product.hasVariants || false,
+      variants: product.variants?.map(v => ({
+        size: v.size,
+        color: v.color,
+        stock: v.stock,
+        skuSuffix: v.skuSuffix,
+        priceAdjustment: v.priceAdjustment,
+      })) || [],
     }
   }
   return {
@@ -71,6 +83,8 @@ function getInitialFormData(product?: Product | null): ProductFormData {
     author: '',
     size: '',
     color: '',
+    hasVariants: false,
+    variants: [],
   }
 }
 
@@ -125,12 +139,6 @@ export function ProductForm({ product, onSubmit, loading }: ProductFormProps) {
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: '' }))
     }
-  }
-
-  const handleImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    const images = value.split(',').map((url) => url.trim()).filter(Boolean)
-    setFormData((prev) => ({ ...prev, images }))
   }
 
   return (
@@ -232,43 +240,48 @@ export function ProductForm({ product, onSubmit, loading }: ProductFormProps) {
             <CardHeader>
               <CardTitle>Images</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="thumbnail">Thumbnail URL</Label>
-                <Input
-                  id="thumbnail"
-                  name="thumbnail"
-                  value={formData.thumbnail}
-                  onChange={handleChange}
-                  placeholder="https://example.com/image.jpg"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="images">Image URLs (comma-separated)</Label>
-                <Input
-                  id="images"
-                  value={formData.images.join(', ')}
-                  onChange={handleImagesChange}
-                  placeholder="https://example.com/image1.jpg, https://example.com/image2.jpg"
-                />
-              </div>
-
-              {formData.thumbnail && (
-                <div className="mt-4">
-                  <p className="text-sm text-muted-foreground mb-2">Preview:</p>
-                  <img
-                    src={formData.thumbnail}
-                    alt="Thumbnail preview"
-                    className="h-32 w-32 object-cover rounded-lg"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = 'none'
-                    }}
-                  />
-                </div>
-              )}
+            <CardContent>
+              <ImageUploader
+                images={formData.images}
+                onImagesChange={(images) => setFormData(prev => ({ ...prev, images }))}
+                thumbnail={formData.thumbnail}
+                onThumbnailChange={(thumbnail) => setFormData(prev => ({ ...prev, thumbnail }))}
+                maxImages={10}
+              />
             </CardContent>
           </Card>
+
+          {/* Variant Manager for Apparel */}
+          {formData.category === 'apparel' && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="hasVariants"
+                  checked={formData.hasVariants}
+                  onChange={(e) => setFormData(prev => ({ 
+                    ...prev, 
+                    hasVariants: e.target.checked,
+                    variants: e.target.checked ? prev.variants : []
+                  }))}
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                <Label htmlFor="hasVariants" className="text-base font-medium">
+                  This product has size/color variants
+                </Label>
+              </div>
+
+              {formData.hasVariants && (
+                <VariantManager
+                  variants={formData.variants || []}
+                  onVariantsChange={(variants) => {
+                    const totalStock = variants.reduce((sum, v) => sum + v.stock, 0)
+                    setFormData(prev => ({ ...prev, variants, stock: totalStock }))
+                  }}
+                />
+              )}
+            </div>
+          )}
         </div>
 
         <div className="space-y-6">
@@ -336,28 +349,36 @@ export function ProductForm({ product, onSubmit, loading }: ProductFormProps) {
               <CardTitle>Inventory</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="stock">Stock Quantity *</Label>
-                <Input
-                  id="stock"
-                  name="stock"
-                  type="number"
-                  min="0"
-                  value={formData.stock}
-                  onChange={handleChange}
-                  placeholder="0"
-                />
-                {errors.stock && <p className="text-sm text-red-600">{errors.stock}</p>}
-              </div>
+              {formData.hasVariants && formData.category === 'apparel' ? (
+                <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-md">
+                  <p className="font-medium text-foreground">Stock managed by variants</p>
+                  <p className="mt-1">Total stock: {formData.stock} units across all size/color combinations.</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Label htmlFor="stock">Stock Quantity *</Label>
+                  <Input
+                    id="stock"
+                    name="stock"
+                    type="number"
+                    min="0"
+                    value={formData.stock}
+                    onChange={handleChange}
+                    placeholder="0"
+                  />
+                  {errors.stock && <p className="text-sm text-red-600">{errors.stock}</p>}
+                </div>
+              )}
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Variants</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {formData.category === 'books' && (
+          {/* Book-specific fields */}
+          {formData.category === 'books' && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Book Details</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="author">Author</Label>
                   <Input
@@ -368,35 +389,40 @@ export function ProductForm({ product, onSubmit, loading }: ProductFormProps) {
                     placeholder="Author name"
                   />
                 </div>
-              )}
+              </CardContent>
+            </Card>
+          )}
 
-              {formData.category !== 'books' && (
-                <>
-                  <div className="space-y-2">
-                    <Label htmlFor="size">Size</Label>
-                    <Input
-                      id="size"
-                      name="size"
-                      value={formData.size}
-                      onChange={handleChange}
-                      placeholder="S, M, L, XL"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="color">Color</Label>
-                    <Input
-                      id="color"
-                      name="color"
-                      value={formData.color}
-                      onChange={handleChange}
-                      placeholder="Black, White, etc."
-                    />
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
+          {/* Accessories simple size/color (not using variant system) */}
+          {formData.category === 'accessories' && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Options</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="size">Size</Label>
+                  <Input
+                    id="size"
+                    name="size"
+                    value={formData.size}
+                    onChange={handleChange}
+                    placeholder="One Size, S/M/L, etc."
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="color">Color</Label>
+                  <Input
+                    id="color"
+                    name="color"
+                    value={formData.color}
+                    onChange={handleChange}
+                    placeholder="Black, White, etc."
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </form>

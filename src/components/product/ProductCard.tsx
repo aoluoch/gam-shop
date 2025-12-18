@@ -1,5 +1,5 @@
 import { ShoppingCart, Heart, Eye } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { useCart } from '@/hooks/useCart'
@@ -11,6 +11,7 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   const { addItem, isInCart } = useCart()
+  const navigate = useNavigate()
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-KE', {
@@ -20,10 +21,19 @@ export function ProductCard({ product }: ProductCardProps) {
     }).format(price)
   }
 
+  // Products with variants or apparel category should go to detail page for size/color selection
+  const hasVariants = product.hasVariants || product.category === 'apparel'
+
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    addItem(product)
+    
+    if (hasVariants) {
+      // Navigate to product page for variant selection
+      navigate(`/product/${product.id}`)
+    } else {
+      addItem(product)
+    }
   }
 
   const inCart = isInCart(product.id)
@@ -79,11 +89,11 @@ export function ProductCard({ product }: ProductCardProps) {
         <div className="flex items-center gap-2">
           <Button
             className="flex-1"
-            variant={inCart ? 'secondary' : 'default'}
+            variant={inCart && !hasVariants ? 'secondary' : 'default'}
             onClick={handleAddToCart}
           >
             <ShoppingCart className="mr-2 h-4 w-4" />
-            {inCart ? 'Add More' : 'Add to Cart'}
+            {hasVariants ? 'Select Options' : inCart ? 'Add More' : 'Add to Cart'}
           </Button>
           <Button
             size="icon"

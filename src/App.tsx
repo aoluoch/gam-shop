@@ -14,6 +14,7 @@ import {
   OrdersPage,
   CheckoutPage,
   OrderSuccessPage,
+  ProductPage,
   AdminDashboardPage,
   AdminProductsPage,
   AdminProductFormPage,
@@ -212,6 +213,7 @@ function AppRoutes() {
         <Route path={ROUTES.BOOKS} element={<BooksPage />} />
         <Route path={ROUTES.APPAREL} element={<ApparelPage />} />
         <Route path={ROUTES.ACCESSORIES} element={<AccessoriesPage />} />
+        <Route path={ROUTES.PRODUCT} element={<ProductPage />} />
         <Route path={ROUTES.ABOUT} element={<AboutPage />} />
         <Route path={ROUTES.CONTACT} element={<ContactPage />} />
         <Route path={ROUTES.CART} element={<CartPage />} />

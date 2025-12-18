@@ -8,6 +8,7 @@ export { CartPage } from './Cart';
 export { AccountPage, OrdersPage } from './Account';
 export { CheckoutPage } from './Checkout';
 export { OrderSuccessPage } from './OrderSuccess';
+export { ProductPage } from './Product';
 export {
   AdminDashboardPage,
   AdminProductsPage,

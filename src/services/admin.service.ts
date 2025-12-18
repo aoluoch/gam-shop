@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { Product } from '@/types/product'
+import type { Product, ProductVariant, VariantFormData } from '@/types/product'
 import type { Order, OrderStatus, PaymentStatus } from '@/types/order'
 import type { UserProfile, UserRole } from '@/types/user'
 
@@ -69,11 +69,31 @@ export async function getProductById(id: string): Promise<Product | null> {
     return null
   }
 
-  return mapProduct(data)
+  const product = mapProduct(data)
+
+  // Fetch variants for the product
+  const { data: variantsData } = await supabase
+    .from('product_variants')
+    .select('*')
+    .eq('product_id', id)
+    .eq('is_active', true)
+    .order('size', { ascending: true })
+
+  if (variantsData && variantsData.length > 0) {
+    product.variants = variantsData.map(mapVariant)
+    product.hasVariants = true
+  }
+
+  return product
+}
+
+interface CreateProductInput extends Omit<Product, 'id' | 'createdAt' | 'updatedAt' | 'variants'> {
+  hasVariants?: boolean
+  variants?: VariantFormData[]
 }
 
 export async function createProduct(
-  product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>
+  product: CreateProductInput
 ): Promise<{ data: Product | null; error: Error | null }> {
   const { data, error } = await supabase
     .from('products')
@@ -101,12 +121,52 @@ export async function createProduct(
     return { data: null, error: new Error(error.message) }
   }
 
-  return { data: mapProduct(data), error: null }
+  const createdProduct = mapProduct(data)
+
+  // Create variants if provided
+  if (product.hasVariants && product.variants && product.variants.length > 0) {
+    const variantsToInsert = product.variants.map(v => ({
+      product_id: createdProduct.id,
+      size: v.size,
+      color: v.color,
+      stock: v.stock,
+      sku_suffix: v.skuSuffix,
+      price_adjustment: v.priceAdjustment || 0,
+      is_active: true,
+    }))
+
+    const { error: variantError } = await supabase
+      .from('product_variants')
+      .insert(variantsToInsert)
+
+    if (variantError) {
+      console.error('Error creating variants:', variantError)
+    } else {
+      createdProduct.hasVariants = true
+      createdProduct.variants = product.variants.map((v) => ({
+        id: '',
+        productId: createdProduct.id,
+        size: v.size,
+        color: v.color,
+        stock: v.stock,
+        skuSuffix: v.skuSuffix,
+        priceAdjustment: v.priceAdjustment,
+        isActive: true,
+      }))
+    }
+  }
+
+  return { data: createdProduct, error: null }
+}
+
+interface UpdateProductInput extends Partial<Omit<Product, 'id' | 'createdAt' | 'updatedAt' | 'variants'>> {
+  hasVariants?: boolean
+  variants?: VariantFormData[]
 }
 
 export async function updateProduct(
   id: string,
-  updates: Partial<Omit<Product, 'id' | 'createdAt' | 'updatedAt'>>
+  updates: UpdateProductInput
 ): Promise<{ error: Error | null }> {
   const updateData: Record<string, unknown> = {}
   
@@ -130,7 +190,46 @@ export async function updateProduct(
     .update(updateData)
     .eq('id', id)
 
-  return { error: error ? new Error(error.message) : null }
+  if (error) {
+    return { error: new Error(error.message) }
+  }
+
+  // Handle variants update
+  if (updates.hasVariants !== undefined) {
+    if (updates.hasVariants && updates.variants && updates.variants.length > 0) {
+      // Delete existing variants and insert new ones
+      await supabase
+        .from('product_variants')
+        .delete()
+        .eq('product_id', id)
+
+      const variantsToInsert = updates.variants.map(v => ({
+        product_id: id,
+        size: v.size,
+        color: v.color,
+        stock: v.stock,
+        sku_suffix: v.skuSuffix,
+        price_adjustment: v.priceAdjustment || 0,
+        is_active: true,
+      }))
+
+      const { error: variantError } = await supabase
+        .from('product_variants')
+        .insert(variantsToInsert)
+
+      if (variantError) {
+        console.error('Error updating variants:', variantError)
+      }
+    } else if (!updates.hasVariants) {
+      // Remove all variants if hasVariants is false
+      await supabase
+        .from('product_variants')
+        .delete()
+        .eq('product_id', id)
+    }
+  }
+
+  return { error: null }
 }
 
 export async function deleteProduct(id: string): Promise<{ error: Error | null }> {
@@ -298,6 +397,21 @@ function mapProduct(data: Record<string, unknown>): Product {
     author: data.author as string | undefined,
     size: data.size as string | undefined,
     color: data.color as string | undefined,
+    createdAt: data.created_at as string,
+    updatedAt: data.updated_at as string,
+  }
+}
+
+function mapVariant(data: Record<string, unknown>): ProductVariant {
+  return {
+    id: data.id as string,
+    productId: data.product_id as string,
+    size: data.size as string,
+    color: data.color as string,
+    stock: Number(data.stock),
+    skuSuffix: data.sku_suffix as string | undefined,
+    priceAdjustment: data.price_adjustment ? Number(data.price_adjustment) : undefined,
+    isActive: Boolean(data.is_active),
     createdAt: data.created_at as string,
     updatedAt: data.updated_at as string,
   }

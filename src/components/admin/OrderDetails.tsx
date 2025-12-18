@@ -97,12 +97,25 @@ export function OrderDetails({
                       )}
                       <div className="flex-1">
                         <p className="font-medium">{item.productName}</p>
-                        <div className="text-sm text-muted-foreground">
-                          {item.size && <span>Size: {item.size}</span>}
-                          {item.size && item.color && <span> • </span>}
-                          {item.color && <span>Color: {item.color}</span>}
-                        </div>
-                        <p className="text-sm text-muted-foreground">
+                        {(item.size || item.color) && (
+                          <div className="flex items-center gap-2 mt-1">
+                            {item.size && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                Size: {item.size}
+                              </span>
+                            )}
+                            {item.color && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                                <span
+                                  className="w-2.5 h-2.5 rounded-full border border-gray-300"
+                                  style={{ backgroundColor: item.color.toLowerCase() }}
+                                />
+                                {item.color}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                        <p className="text-sm text-muted-foreground mt-1">
                           Qty: {item.quantity} × KSh {item.price.toLocaleString()}
                         </p>
                       </div>
