@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ShoppingCart, User, Search, ChevronDown, Menu, LogOut } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useCart } from '@/hooks/useCart';
 
@@ -25,6 +25,22 @@ export function Navbar() {
   const { productCount } = useCart();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [shopMenuOpen, setShopMenuOpen] = useState(false);
+  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleShopMouseEnter = useCallback(() => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+    setShopMenuOpen(true);
+  }, []);
+
+  const handleShopMouseLeave = useCallback(() => {
+    closeTimeoutRef.current = setTimeout(() => {
+      setShopMenuOpen(false);
+    }, 300);
+  }, []);
 
   const handleSignOut = async () => {
     await signOut();
@@ -58,32 +74,45 @@ export function Navbar() {
           <nav className="hidden md:flex items-center gap-1">
             {NAV_LINKS.map((link) => (
               link.label === 'Shop' ? (
-                <DropdownMenu key={link.href}>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      className={cn(
-                        'flex items-center gap-1',
-                        isActive(link.href) && 'bg-accent text-accent-foreground'
-                      )}
+                <div
+                  key={link.href}
+                  className="relative"
+                  onMouseEnter={handleShopMouseEnter}
+                  onMouseLeave={handleShopMouseLeave}
+                >
+                  <DropdownMenu open={shopMenuOpen} onOpenChange={setShopMenuOpen}>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        className={cn(
+                          'flex items-center gap-1',
+                          isActive(link.href) && 'bg-accent text-accent-foreground'
+                        )}
+                      >
+                        {link.label}
+                        <ChevronDown className={cn('h-4 w-4 transition-transform', shopMenuOpen && 'rotate-180')} />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent 
+                      align="start" 
+                      className="w-48"
+                      onMouseEnter={handleShopMouseEnter}
+                      onMouseLeave={handleShopMouseLeave}
                     >
-                      {link.label}
-                      <ChevronDown className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="w-48">
-                    {SHOP_CATEGORIES.map((category) => (
-                      <DropdownMenuItem key={category.href} asChild>
-                        <Link 
-                          to={category.href}
-                          className="w-full cursor-pointer"
-                        >
-                          {category.label}
-                        </Link>
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                      {SHOP_CATEGORIES.map((category) => (
+                        <DropdownMenuItem key={category.href} asChild>
+                          <Link 
+                            to={category.href}
+                            className="w-full cursor-pointer"
+                            onClick={() => setShopMenuOpen(false)}
+                          >
+                            {category.label}
+                          </Link>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               ) : (
                 <Button
                   key={link.href}
