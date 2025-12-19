@@ -34,6 +34,7 @@ import {
   AdminStockMonitoringPage,
   AdminFinancialSheetPage,
   WishlistPage,
+  AboutPage,
 } from '@/pages';
 import { AuthProvider } from '@/context/AuthContext';
 import { CartProvider } from '@/context/CartContext';
@@ -211,14 +212,6 @@ function AccessoriesPage() {
   );
 }
 
-function AboutPage() {
-  return (
-    <div className="container mx-auto px-4 py-12">
-      <h1 className="text-3xl font-bold text-primary mb-4">About Us</h1>
-      <p className="text-muted-foreground">Learn more about our ministry and mission.</p>
-    </div>
-  );
-}
 
 function ContactPage() {
   return (

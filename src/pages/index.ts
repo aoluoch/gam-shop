@@ -28,3 +28,4 @@ export {
   AdminFinancialSheetPage,
 } from './Admin';
 export { WishlistPage } from './Wishlist';
+export { AboutPage } from './AboutPage';
