@@ -13,6 +13,9 @@ dist-ssr
 *.local
 .env
 
+# Supabase migrations (keep DB schema private)
+supabase/migrations/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
