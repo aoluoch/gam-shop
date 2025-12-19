@@ -9,7 +9,10 @@ import {
   LogOut,
   ChevronLeft,
   MessageSquare,
-  Star
+  Star,
+  BarChart3,
+  Boxes,
+  Receipt
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -20,8 +23,11 @@ import gamLogo from '@/assets/gamlogo.png';
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   'Dashboard': LayoutDashboard,
+  'Analytics': BarChart3,
   'Products': Package,
+  'Stock': Boxes,
   'Orders': ShoppingCart,
+  'Financials': Receipt,
   'Customers': Users,
   'Categories': FolderTree,
   'Reviews': Star,

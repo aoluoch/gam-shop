@@ -16,6 +16,7 @@ import {
   CartPage,
   AccountPage,
   OrdersPage,
+  OrderDetailPage,
   CheckoutPage,
   OrderSuccessPage,
   ProductPage,
@@ -29,6 +30,10 @@ import {
   AdminCategoriesPage,
   AdminContactMessagesPage,
   AdminReviewsPage,
+  AdminAnalyticsPage,
+  AdminStockMonitoringPage,
+  AdminFinancialSheetPage,
+  WishlistPage,
 } from '@/pages';
 import { AuthProvider } from '@/context/AuthContext';
 import { CartProvider } from '@/context/CartContext';
@@ -293,14 +298,6 @@ function GuestRoute({ children }: { children: React.ReactNode }) {
 }
 
 
-function WishlistPage() {
-  return (
-    <div className="container mx-auto px-4 py-12">
-      <h1 className="text-3xl font-bold text-primary mb-4">Wishlist</h1>
-      <p className="text-muted-foreground">Your saved items.</p>
-    </div>
-  );
-}
 
 function AppRoutes() {
   return (
@@ -335,6 +332,7 @@ function AppRoutes() {
         {/* Protected routes (require login) */}
         <Route path={ROUTES.ACCOUNT} element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
         <Route path={ROUTES.ORDERS} element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
+        <Route path={`${ROUTES.ORDERS}/:id`} element={<ProtectedRoute><OrderDetailPage /></ProtectedRoute>} />
         <Route path={ROUTES.WISHLIST} element={<ProtectedRoute><WishlistPage /></ProtectedRoute>} />
       </Route>
 
@@ -351,6 +349,9 @@ function AppRoutes() {
         <Route path={ROUTES.ADMIN_REVIEWS} element={<AdminReviewsPage />} />
         <Route path={ROUTES.ADMIN_MESSAGES} element={<AdminContactMessagesPage />} />
         <Route path={ROUTES.ADMIN_SETTINGS} element={<AdminSettingsPage />} />
+        <Route path={ROUTES.ADMIN_ANALYTICS} element={<AdminAnalyticsPage />} />
+        <Route path={ROUTES.ADMIN_STOCK} element={<AdminStockMonitoringPage />} />
+        <Route path={ROUTES.ADMIN_FINANCIALS} element={<AdminFinancialSheetPage />} />
       </Route>
     </Routes>
   );

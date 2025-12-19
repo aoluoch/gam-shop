@@ -32,16 +32,22 @@ export interface CreateOrderResult {
 
 export async function createOrder(input: CreateOrderInput): Promise<CreateOrderResult> {
   try {
+    console.log('createOrder called with input:', input)
+    
     // Get the current user
     const { data: { user }, error: userError } = await supabase.auth.getUser()
+    console.log('Current user:', user?.id, 'Error:', userError)
     
     if (userError || !user) {
+      console.error('User authentication failed:', userError)
       return { success: false, error: 'User not authenticated' }
     }
 
     // Generate order number
+    console.log('Generating order number...')
     const { data: orderNumberData, error: orderNumberError } = await supabase
       .rpc('generate_order_number')
+    console.log('Order number result:', orderNumberData, 'Error:', orderNumberError)
 
     if (orderNumberError) {
       console.error('Error generating order number:', orderNumberError)
@@ -49,30 +55,36 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     }
 
     const orderNumber = orderNumberData as string
+    console.log('Generated order number:', orderNumber)
 
     // Create the order with payment_status as 'paid' since payment was already confirmed
+    const orderInsertData = {
+      user_id: user.id,
+      order_number: orderNumber,
+      subtotal: input.subtotal,
+      shipping: input.shipping,
+      tax: input.tax,
+      total: input.total,
+      status: 'processing', // Start as processing since payment is confirmed
+      payment_status: 'paid', // Payment already confirmed via Paystack
+      payment_method: input.paymentMethod,
+      payment_reference: input.paymentReference,
+      notes: input.notes,
+      shipping_address: input.shippingAddress,
+    }
+    console.log('Inserting order with data:', orderInsertData)
+    
     const { data: orderData, error: orderError } = await supabase
       .from('orders')
-      .insert({
-        user_id: user.id,
-        order_number: orderNumber,
-        subtotal: input.subtotal,
-        shipping: input.shipping,
-        tax: input.tax,
-        total: input.total,
-        status: 'processing', // Start as processing since payment is confirmed
-        payment_status: 'paid', // Payment already confirmed via Paystack
-        payment_method: input.paymentMethod,
-        payment_reference: input.paymentReference,
-        notes: input.notes,
-        shipping_address: input.shippingAddress,
-      })
+      .insert(orderInsertData)
       .select()
       .single()
 
+    console.log('Order insert result - data:', orderData, 'error:', orderError)
+
     if (orderError) {
       console.error('Error creating order:', orderError)
-      return { success: false, error: 'Failed to create order' }
+      return { success: false, error: `Failed to create order: ${orderError.message}` }
     }
 
     // Create order items
@@ -187,6 +199,31 @@ export async function getUserOrders(): Promise<Order[]> {
   }
 
   return data.map(mapOrder)
+}
+
+export async function getUserOrderById(orderId: string): Promise<Order | null> {
+  const { data: { user } } = await supabase.auth.getUser()
+  
+  if (!user) {
+    return null
+  }
+
+  const { data, error } = await supabase
+    .from('orders')
+    .select(`
+      *,
+      order_items (*)
+    `)
+    .eq('id', orderId)
+    .eq('user_id', user.id)
+    .single()
+
+  if (error) {
+    console.error('Error fetching order:', error)
+    return null
+  }
+
+  return mapOrder(data)
 }
 
 function mapOrder(data: Record<string, unknown>): Order {

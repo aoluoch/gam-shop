@@ -95,9 +95,9 @@ export function PaystackButton({ email, shippingData, onSuccess, onError, classN
       onClose: () => {
         setLoading(false)
       },
-      callback: async (response) => {
+      callback: (response) => {
         // Payment was successful, now create the order
-        await handlePaymentSuccess(response.reference)
+        handlePaymentSuccess(response.reference)
       },
     })
 
@@ -107,7 +107,9 @@ export function PaystackButton({ email, shippingData, onSuccess, onError, classN
   const handlePaymentSuccess = async (reference: string) => {
     try {
       // Verify payment with Supabase Edge Function before creating order
+      console.log('Verifying payment with reference:', reference)
       const verification = await verifyPaystackPayment(reference)
+      console.log('Payment verification result:', verification)
       
       if (!verification.success) {
         setLoading(false)
@@ -137,7 +139,9 @@ export function PaystackButton({ email, shippingData, onSuccess, onError, classN
         paymentReference: reference,
       }
 
+      console.log('Creating order with input:', orderInput)
       const result = await createOrder(orderInput)
+      console.log('Order creation result:', result)
 
       if (result.success) {
         setLoading(false)
@@ -148,7 +152,8 @@ export function PaystackButton({ email, shippingData, onSuccess, onError, classN
         // This is a critical error - payment was taken but order wasn't created
         onError(`Payment successful but order creation failed: ${result.error}. Please contact support with reference: ${reference}`)
       }
-    } catch {
+    } catch (error) {
+      console.error('Error in handlePaymentSuccess:', error)
       setLoading(false)
       onError(`An error occurred while creating your order. Reference: ${reference}. Please contact support.`)
     }

@@ -4,6 +4,7 @@ import { Package, ChevronRight, Loader2, ShoppingBag } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { ROUTES } from '@/constants/routes'
+import { getUserOrders } from '@/services/order.service'
 import type { Order } from '@/types/order'
 
 const statusColors: Record<string, string> = {
@@ -19,12 +20,15 @@ export function OrderHistory() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // TODO: Fetch orders from API
-    // For now, using mock data
-    setTimeout(() => {
-      setOrders([])
-      setLoading(false)
-    }, 500)
+    getUserOrders()
+      .then(data => {
+        setOrders(data)
+        setLoading(false)
+      })
+      .catch(error => {
+        console.error('Error fetching orders:', error)
+        setLoading(false)
+      })
   }, [])
 
   const formatPrice = (price: number) => {

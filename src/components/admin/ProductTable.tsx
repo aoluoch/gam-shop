@@ -118,7 +118,7 @@ export function ProductTable({ products, onDelete, loading }: ProductTableProps)
                         {product.category}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-right">${product.price.toFixed(2)}</td>
+                    <td className="py-3 px-4 text-right">KSh {product.price.toLocaleString()}</td>
                     <td className="py-3 px-4 text-right">
                       <span
                         className={cn(

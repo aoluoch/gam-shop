@@ -8,7 +8,7 @@ export { RegisterPage } from './RegisterPage';
 export { ForgotPasswordPage } from './ForgotPasswordPage';
 export { ResetPasswordPage } from './ResetPasswordPage';
 export { CartPage } from './Cart';
-export { AccountPage, OrdersPage } from './Account';
+export { AccountPage, OrdersPage, OrderDetailPage } from './Account';
 export { CheckoutPage } from './Checkout';
 export { OrderSuccessPage } from './OrderSuccess';
 export { ProductPage } from './Product';
@@ -23,4 +23,8 @@ export {
   AdminCategoriesPage,
   AdminContactMessagesPage,
   AdminReviewsPage,
+  AdminAnalyticsPage,
+  AdminStockMonitoringPage,
+  AdminFinancialSheetPage,
 } from './Admin';
+export { WishlistPage } from './Wishlist';

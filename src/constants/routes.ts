@@ -31,6 +31,9 @@ export const ROUTES = {
   ADMIN_MESSAGES: '/admin/messages',
   ADMIN_REVIEWS: '/admin/reviews',
   ADMIN_SETTINGS: '/admin/settings',
+  ADMIN_ANALYTICS: '/admin/analytics',
+  ADMIN_STOCK: '/admin/stock',
+  ADMIN_FINANCIALS: '/admin/financials',
 } as const;
 
 export const NAV_LINKS = [
@@ -49,8 +52,11 @@ export const SHOP_CATEGORIES = [
 
 export const ADMIN_NAV_LINKS = [
   { label: 'Dashboard', href: ROUTES.ADMIN },
+  { label: 'Analytics', href: ROUTES.ADMIN_ANALYTICS },
   { label: 'Products', href: ROUTES.ADMIN_PRODUCTS },
+  { label: 'Stock', href: ROUTES.ADMIN_STOCK },
   { label: 'Orders', href: ROUTES.ADMIN_ORDERS },
+  { label: 'Financials', href: ROUTES.ADMIN_FINANCIALS },
   { label: 'Customers', href: ROUTES.ADMIN_CUSTOMERS },
   { label: 'Categories', href: ROUTES.ADMIN_CATEGORIES },
   { label: 'Reviews', href: ROUTES.ADMIN_REVIEWS },
