@@ -47,15 +47,15 @@ export function TestimonialsSection() {
   }
 
   return (
-    <section className="py-16">
+    <section className="py-12 md:py-16">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-foreground mb-3">What Our Customers Say</h2>
-          <p className="text-muted-foreground max-w-xl mx-auto">
+        <div className="text-center mb-8 md:mb-12">
+          <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-2 md:mb-3">What Our Customers Say</h2>
+          <p className="text-sm sm:text-base text-muted-foreground max-w-xl mx-auto">
             Read testimonials from our satisfied customers
           </p>
         </div>
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
           {reviews.map((review) => (
             <Card key={review.id} className="relative">
               <CardContent className="pt-6">

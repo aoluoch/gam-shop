@@ -33,20 +33,20 @@ export function AboutPage() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-primary/10 via-background to-primary/5 py-16 md:py-24">
+      <section className="bg-gradient-to-br from-primary/10 via-background to-primary/5 py-12 md:py-16 lg:py-24">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
-            <div className="flex justify-center mb-6">
+            <div className="flex justify-center mb-4 md:mb-6">
               <img 
                 src={gamLogo} 
                 alt="GAM Shop" 
-                className="h-24 w-auto"
+                className="h-16 sm:h-20 md:h-24 w-auto"
               />
             </div>
-            <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4 md:mb-6">
               About <span className="text-primary">GAM Shop</span>
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground leading-relaxed">
+            <p className="text-base sm:text-lg md:text-xl text-muted-foreground leading-relaxed">
               GAM Shop is the official store of GAM Ministry, dedicated to providing quality Christian 
               books, apparel, and accessories that inspire faith and spread the message of hope. 
               Every purchase you make supports our mission to reach more communities with the Gospel.

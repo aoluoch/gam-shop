@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { ShoppingCart, Heart, Eye, Loader2 } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
@@ -23,16 +23,7 @@ export function ProductCard({ product }: ProductCardProps) {
   const [wishlistLoading, setWishlistLoading] = useState(false)
   const [wishlistItemId, setWishlistItemId] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (user) {
-      checkWishlistStatus()
-    } else {
-      setInWishlist(false)
-      setWishlistItemId(null)
-    }
-  }, [user, product.id])
-
-  async function checkWishlistStatus() {
+  const checkWishlistStatus = useCallback(async () => {
     const inList = await isInWishlist(product.id)
     setInWishlist(inList)
     if (inList) {
@@ -46,7 +37,16 @@ export function ProductCard({ product }: ProductCardProps) {
         setWishlistItemId(data.id)
       }
     }
-  }
+  }, [product.id])
+
+  useEffect(() => {
+    if (user) {
+      checkWishlistStatus()
+    } else {
+      setInWishlist(false)
+      setWishlistItemId(null)
+    }
+  }, [user, product.id, checkWishlistStatus])
 
   async function handleWishlistToggle(e: React.MouseEvent) {
     e.preventDefault()
@@ -160,7 +160,7 @@ export function ProductCard({ product }: ProductCardProps) {
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           <Button
             className="flex-1"
             variant={inCart && !hasVariants ? 'secondary' : 'default'}
@@ -169,24 +169,27 @@ export function ProductCard({ product }: ProductCardProps) {
             <ShoppingCart className="mr-2 h-4 w-4" />
             {hasVariants ? 'Select Options' : inCart ? 'Add More' : 'Add to Cart'}
           </Button>
-          <Button
-            size="icon"
-            variant={inWishlist ? "default" : "outline"}
-            onClick={handleWishlistToggle}
-            disabled={wishlistLoading}
-            title={inWishlist ? "Remove from Wishlist" : "Add to Wishlist"}
-          >
-            {wishlistLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Heart className={`h-4 w-4 ${inWishlist ? 'fill-current' : ''}`} />
-            )}
-          </Button>
-          <Link to={`/product/${product.id}`} onClick={(e) => e.stopPropagation()}>
-            <Button size="icon" variant="outline" title="Quick View">
-              <Eye className="h-4 w-4" />
+          <div className="flex gap-2">
+            <Button
+              size="icon"
+              variant={inWishlist ? "default" : "outline"}
+              onClick={handleWishlistToggle}
+              disabled={wishlistLoading}
+              title={inWishlist ? "Remove from Wishlist" : "Add to Wishlist"}
+              className="flex-1 sm:flex-none"
+            >
+              {wishlistLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Heart className={`h-4 w-4 ${inWishlist ? 'fill-current' : ''}`} />
+              )}
             </Button>
-          </Link>
+            <Link to={`/product/${product.id}`} onClick={(e) => e.stopPropagation()} className="flex-1 sm:flex-none">
+              <Button size="icon" variant="outline" title="Quick View" className="w-full">
+                <Eye className="h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
         </div>
       </CardContent>
     </Card>

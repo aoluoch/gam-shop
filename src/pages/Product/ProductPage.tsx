@@ -104,16 +104,7 @@ export function ProductPage() {
     }
   }, [id, loadProduct])
 
-  useEffect(() => {
-    if (user && id) {
-      checkWishlistStatus()
-    } else {
-      setInWishlist(false)
-      setWishlistItemId(null)
-    }
-  }, [user, id])
-
-  async function checkWishlistStatus() {
+  const checkWishlistStatus = useCallback(async () => {
     if (!id) return
     const inList = await isInWishlist(id)
     setInWishlist(inList)
@@ -127,7 +118,16 @@ export function ProductPage() {
         setWishlistItemId(data.id)
       }
     }
-  }
+  }, [id])
+
+  useEffect(() => {
+    if (user && id) {
+      checkWishlistStatus()
+    } else {
+      setInWishlist(false)
+      setWishlistItemId(null)
+    }
+  }, [user, id, checkWishlistStatus])
 
   async function handleWishlistToggle() {
     if (!user) {
@@ -334,12 +334,12 @@ export function ProductPage() {
           </div>
 
           {/* Price */}
-          <div className="flex items-baseline gap-3">
-            <span className="text-3xl font-bold text-primary">
+          <div className="flex flex-wrap items-baseline gap-2 sm:gap-3">
+            <span className="text-2xl sm:text-3xl font-bold text-primary">
               KES {product.price.toLocaleString()}
             </span>
             {product.compareAtPrice && product.compareAtPrice > product.price && (
-              <span className="text-lg text-muted-foreground line-through">
+              <span className="text-base sm:text-lg text-muted-foreground line-through">
                 KES {product.compareAtPrice.toLocaleString()}
               </span>
             )}
@@ -504,10 +504,10 @@ export function ProductPage() {
             )}
 
             {/* Action Buttons */}
-            <div className="flex gap-4">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
               <Button
                 size="lg"
-                className="flex-1"
+                className="flex-1 w-full sm:w-auto"
                 onClick={handleAddToCart}
                 disabled={!canAddToCart}
               >
@@ -520,11 +520,15 @@ export function ProductPage() {
                 onClick={handleWishlistToggle}
                 disabled={wishlistLoading}
                 title={inWishlist ? "Remove from Wishlist" : "Add to Wishlist"}
+                className="w-full sm:w-auto"
               >
                 {wishlistLoading ? (
                   <Loader2 className="h-5 w-5 animate-spin" />
                 ) : (
-                  <Heart className={`h-5 w-5 ${inWishlist ? 'fill-current' : ''}`} />
+                  <>
+                    <Heart className={`h-5 w-5 ${inWishlist ? 'fill-current' : ''}`} />
+                    <span className="ml-2 sm:hidden">{inWishlist ? 'Remove from Wishlist' : 'Add to Wishlist'}</span>
+                  </>
                 )}
               </Button>
             </div>

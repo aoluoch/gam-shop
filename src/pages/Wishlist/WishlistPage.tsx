@@ -78,9 +78,9 @@ export function WishlistPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-12">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-primary flex items-center gap-3">
+    <div className="container mx-auto px-4 py-6 md:py-12">
+      <div className="mb-6 md:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-primary flex items-center gap-2 sm:gap-3">
           <Heart className="h-8 w-8" />
           My Wishlist
         </h1>

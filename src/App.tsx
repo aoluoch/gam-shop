@@ -194,15 +194,15 @@ function AccessoriesPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-12">
-      <h1 className="text-3xl font-bold text-primary mb-4">Accessories</h1>
-      <p className="text-muted-foreground mb-8">Caps and rubber bands.</p>
+    <div className="container mx-auto px-4 py-6 md:py-12">
+      <h1 className="text-2xl sm:text-3xl font-bold text-primary mb-3 md:mb-4">Accessories</h1>
+      <p className="text-sm sm:text-base text-muted-foreground mb-6 md:mb-8">Caps and rubber bands.</p>
       {accessories.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-muted-foreground">No accessories available at the moment.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
           {accessories.map(product => (
             <ProductCard key={product.id} product={product} />
           ))}
@@ -215,10 +215,10 @@ function AccessoriesPage() {
 
 function ContactPage() {
   return (
-    <div className="container mx-auto px-4 py-12">
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-primary mb-4">Contact Us</h1>
-        <p className="text-muted-foreground max-w-2xl mx-auto">
+    <div className="container mx-auto px-4 py-6 md:py-12">
+      <div className="text-center mb-6 md:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-primary mb-3 md:mb-4">Contact Us</h1>
+        <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto">
           Have questions about our products or ministry? We'd love to hear from you. 
           Fill out the form below and we'll get back to you as soon as possible.
         </p>

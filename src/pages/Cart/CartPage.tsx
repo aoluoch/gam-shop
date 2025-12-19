@@ -75,11 +75,11 @@ export function CartPage() {
         </div>
 
         <div className="lg:col-span-1">
-          <Card className="sticky top-4">
+          <Card className="lg:sticky lg:top-4">
             <CardHeader>
               <CardTitle>Order Summary</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-4 md:space-y-6">
               <CartSummary />
               <div className="space-y-3">
                 <Button asChild className="w-full" size="lg">

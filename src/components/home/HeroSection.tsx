@@ -5,11 +5,11 @@ import { ROUTES } from '@/constants/routes'
 
 export function HeroSection() {
   return (
-    <section className="relative bg-gradient-to-br from-primary/10 via-background to-secondary/10 py-16 md:py-24">
+    <section className="relative bg-gradient-to-br from-primary/10 via-background to-secondary/10 py-12 md:py-16 lg:py-24">
       <div className="container mx-auto px-4">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-          <div className="space-y-6">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight">
+        <div className="grid lg:grid-cols-2 gap-8 md:gap-12 items-center">
+          <div className="space-y-4 md:space-y-6">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight">
               Spiritual Resources for Your{' '}
               <span className="text-primary">Journey</span>
             </h1>

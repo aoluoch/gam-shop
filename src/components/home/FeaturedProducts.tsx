@@ -35,21 +35,21 @@ export function FeaturedProducts() {
   }
 
   return (
-    <section className="py-16">
+    <section className="py-12 md:py-16">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 md:mb-8">
           <div>
-            <h2 className="text-3xl font-bold text-foreground">Featured Products</h2>
-            <p className="text-muted-foreground mt-1">Our most popular items</p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-foreground">Featured Products</h2>
+            <p className="text-sm sm:text-base text-muted-foreground mt-1">Our most popular items</p>
           </div>
-          <Button variant="outline" asChild>
+          <Button variant="outline" asChild className="self-start sm:self-auto">
             <Link to={ROUTES.SHOP}>
               View All
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
           {featuredProducts.map(product => (
             <ProductCard key={product.id} product={product} />
           ))}

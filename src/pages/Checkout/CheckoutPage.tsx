@@ -42,20 +42,20 @@ export function CheckoutPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center gap-4 mb-8">
+    <div className="container mx-auto px-4 py-4 md:py-8">
+      <div className="flex items-center gap-2 sm:gap-4 mb-6 md:mb-8">
         <Button variant="ghost" size="icon" asChild>
           <Link to={ROUTES.CART}>
             <ArrowLeft className="h-5 w-5" />
           </Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Checkout</h1>
-          <p className="text-muted-foreground">Complete your order</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Checkout</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">Complete your order</p>
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-8">
+      <div className="grid lg:grid-cols-3 gap-6 md:gap-8">
         <div className="lg:col-span-2">
           <CheckoutForm onSuccess={handlePaymentSuccess} />
         </div>

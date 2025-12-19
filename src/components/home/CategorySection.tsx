@@ -41,13 +41,13 @@ export function CategorySection() {
             <Link
               key={category.name}
               to={category.href}
-              className="group relative p-8 bg-card rounded-xl border shadow-sm hover:shadow-lg transition-all"
+              className="group relative p-6 md:p-8 bg-card rounded-xl border shadow-sm hover:shadow-lg transition-all"
             >
-              <div className={`inline-flex p-3 rounded-lg ${category.color} mb-4`}>
-                <category.icon className="h-6 w-6" />
+              <div className={`inline-flex p-2 md:p-3 rounded-lg ${category.color} mb-3 md:mb-4`}>
+                <category.icon className="h-5 w-5 md:h-6 md:w-6" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">{category.name}</h3>
-              <p className="text-muted-foreground text-sm mb-4">{category.description}</p>
+              <h3 className="text-lg md:text-xl font-semibold mb-2">{category.name}</h3>
+              <p className="text-muted-foreground text-xs sm:text-sm mb-3 md:mb-4">{category.description}</p>
               <span className="inline-flex items-center text-primary text-sm font-medium group-hover:gap-2 transition-all">
                 Shop Now
                 <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-transform" />
