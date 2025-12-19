@@ -8,19 +8,12 @@ import { getWishlistItems, removeFromWishlist, moveToCart, type WishlistItem } f
 import { useToast } from '@/hooks/useToast'
 import { useCart } from '@/hooks/useCart'
 
-import { Honeybadger } from '@honeybadger-io/react'
-
 export function WishlistPage() {
   const [items, setItems] = useState<WishlistItem[]>([])
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const { success, error: showError } = useToast()
   useCart() // Hook used for cart context availability
-
-  // Test Honeybadger - remove after confirming it works
-  useEffect(() => {
-    Honeybadger.notify("Testing Honeybadger!")
-  }, [])
 
   const loadWishlist = useCallback(async () => {
     try {
