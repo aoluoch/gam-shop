@@ -1,12 +1,14 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ShoppingCart, Heart, ChevronLeft, ChevronRight, Check, AlertCircle } from 'lucide-react'
+import { ShoppingCart, Heart, ChevronLeft, ChevronRight, Check, AlertCircle, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { getOptimizedImageUrl } from '@/services/cloudinary.service'
 import { useCart } from '@/hooks/useCart'
+import { useAuth } from '@/hooks/useAuth'
 import { useToast } from '@/hooks/useToast'
 import { supabase } from '@/services/supabase'
+import { addToWishlist, removeFromWishlist, isInWishlist } from '@/services/wishlist.service'
 import { cn } from '@/lib/utils'
 import { ReviewSection } from '@/components/product/ReviewSection'
 import type { Product, ProductVariant } from '@/types/product'
@@ -15,9 +17,13 @@ export function ProductPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { addItem, isInCart } = useCart()
+  const { user } = useAuth()
   const { success, error: showError } = useToast()
 
   const [product, setProduct] = useState<Product | null>(null)
+  const [inWishlist, setInWishlist] = useState(false)
+  const [wishlistLoading, setWishlistLoading] = useState(false)
+  const [wishlistItemId, setWishlistItemId] = useState<string | null>(null)
   const [variants, setVariants] = useState<ProductVariant[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
@@ -97,6 +103,69 @@ export function ProductPage() {
       loadProduct(id)
     }
   }, [id, loadProduct])
+
+  useEffect(() => {
+    if (user && id) {
+      checkWishlistStatus()
+    } else {
+      setInWishlist(false)
+      setWishlistItemId(null)
+    }
+  }, [user, id])
+
+  async function checkWishlistStatus() {
+    if (!id) return
+    const inList = await isInWishlist(id)
+    setInWishlist(inList)
+    if (inList) {
+      const { data } = await supabase
+        .from('wishlist_items')
+        .select('id')
+        .eq('product_id', id)
+        .maybeSingle()
+      if (data) {
+        setWishlistItemId(data.id)
+      }
+    }
+  }
+
+  async function handleWishlistToggle() {
+    if (!user) {
+      showError('Please login to add items to your wishlist')
+      navigate('/login')
+      return
+    }
+
+    if (!id) return
+
+    setWishlistLoading(true)
+    try {
+      if (inWishlist && wishlistItemId) {
+        const { error } = await removeFromWishlist(wishlistItemId)
+        if (error) {
+          showError(error.message)
+        } else {
+          setInWishlist(false)
+          setWishlistItemId(null)
+          success('Removed from wishlist')
+        }
+      } else {
+        const { error } = await addToWishlist(id)
+        if (error) {
+          showError(error.message)
+        } else {
+          setInWishlist(true)
+          await checkWishlistStatus()
+          success('Added to wishlist')
+        }
+      }
+    } catch (err) {
+      console.error('Wishlist error:', err)
+      showError('Failed to update wishlist')
+    } finally {
+      setWishlistLoading(false)
+    }
+  }
 
   // Get unique sizes and colors from variants
   const availableSizes = useMemo(() => {
@@ -445,8 +514,18 @@ export function ProductPage() {
                 <ShoppingCart className="h-5 w-5 mr-2" />
                 {isInCart(product.id) ? 'Add More' : 'Add to Cart'}
               </Button>
-              <Button size="lg" variant="outline">
-                <Heart className="h-5 w-5" />
+              <Button
+                size="lg"
+                variant={inWishlist ? "default" : "outline"}
+                onClick={handleWishlistToggle}
+                disabled={wishlistLoading}
+                title={inWishlist ? "Remove from Wishlist" : "Add to Wishlist"}
+              >
+                {wishlistLoading ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Heart className={`h-5 w-5 ${inWishlist ? 'fill-current' : ''}`} />
+                )}
               </Button>
             </div>
           </div>

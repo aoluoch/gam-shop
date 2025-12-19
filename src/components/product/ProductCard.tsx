@@ -1,8 +1,13 @@
-import { ShoppingCart, Heart, Eye } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { ShoppingCart, Heart, Eye, Loader2 } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { useCart } from '@/hooks/useCart'
+import { useAuth } from '@/hooks/useAuth'
+import { useToast } from '@/hooks/useToast'
+import { addToWishlist, removeFromWishlist, isInWishlist } from '@/services/wishlist.service'
+import { supabase } from '@/services/supabase'
 import type { Product } from '@/types/product'
 
 interface ProductCardProps {
@@ -11,7 +16,76 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   const { addItem, isInCart } = useCart()
+  const { user } = useAuth()
+  const { success, error: showError } = useToast()
   const navigate = useNavigate()
+  const [inWishlist, setInWishlist] = useState(false)
+  const [wishlistLoading, setWishlistLoading] = useState(false)
+  const [wishlistItemId, setWishlistItemId] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (user) {
+      checkWishlistStatus()
+    } else {
+      setInWishlist(false)
+      setWishlistItemId(null)
+    }
+  }, [user, product.id])
+
+  async function checkWishlistStatus() {
+    const inList = await isInWishlist(product.id)
+    setInWishlist(inList)
+    if (inList) {
+      // Get the wishlist item ID for removal
+      const { data } = await supabase
+        .from('wishlist_items')
+        .select('id')
+        .eq('product_id', product.id)
+        .maybeSingle()
+      if (data) {
+        setWishlistItemId(data.id)
+      }
+    }
+  }
+
+  async function handleWishlistToggle(e: React.MouseEvent) {
+    e.preventDefault()
+    e.stopPropagation()
+
+    if (!user) {
+      showError('Please login to add items to your wishlist')
+      navigate('/login')
+      return
+    }
+
+    setWishlistLoading(true)
+    try {
+      if (inWishlist && wishlistItemId) {
+        const { error } = await removeFromWishlist(wishlistItemId)
+        if (error) {
+          showError(error.message)
+        } else {
+          setInWishlist(false)
+          setWishlistItemId(null)
+          success('Removed from wishlist')
+        }
+      } else {
+        const { error } = await addToWishlist(product.id)
+        if (error) {
+          showError(error.message)
+        } else {
+          setInWishlist(true)
+          await checkWishlistStatus() // Get the new item ID
+          success('Added to wishlist')
+        }
+      }
+    } catch (err) {
+      console.error('Wishlist error:', err)
+      showError('Failed to update wishlist')
+    } finally {
+      setWishlistLoading(false)
+    }
+  }
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-KE', {
@@ -97,11 +171,16 @@ export function ProductCard({ product }: ProductCardProps) {
           </Button>
           <Button
             size="icon"
-            variant="outline"
-            onClick={(e) => e.preventDefault()}
-            title="Add to Wishlist"
+            variant={inWishlist ? "default" : "outline"}
+            onClick={handleWishlistToggle}
+            disabled={wishlistLoading}
+            title={inWishlist ? "Remove from Wishlist" : "Add to Wishlist"}
           >
-            <Heart className="h-4 w-4" />
+            {wishlistLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Heart className={`h-4 w-4 ${inWishlist ? 'fill-current' : ''}`} />
+            )}
           </Button>
           <Link to={`/product/${product.id}`} onClick={(e) => e.stopPropagation()}>
             <Button size="icon" variant="outline" title="Quick View">
