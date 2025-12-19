@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@honeybadger-io/js": "^6.12.3",
+    "@honeybadger-io/react": "^6.1.27",
     "@paystack/inline-js": "^2.22.7",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-dialog": "^1.1.15",

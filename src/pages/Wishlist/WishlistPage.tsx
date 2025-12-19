@@ -8,6 +8,10 @@ import { getWishlistItems, removeFromWishlist, moveToCart, type WishlistItem } f
 import { useToast } from '@/hooks/useToast'
 import { useCart } from '@/hooks/useCart'
 
+import { Honeybadger } from '@honeybadger-io/react'
+
+Honeybadger.notify("Testing Honeybadger!")
+
 export function WishlistPage() {
   const [items, setItems] = useState<WishlistItem[]>([])
   const [loading, setLoading] = useState(true)
