@@ -228,7 +228,7 @@ export function Navbar() {
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-80">
+              <SheetContent side="left" className="w-80 z-[110]">
                 <div className="flex flex-col gap-6 pt-6">
                   {/* Mobile Logo */}
                   <Link 

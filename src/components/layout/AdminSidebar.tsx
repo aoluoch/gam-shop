@@ -52,7 +52,7 @@ export function AdminSidebar() {
   return (
     <>
       {/* Mobile Menu Button */}
-      <div className="lg:hidden fixed top-4 left-4 z-50">
+      <div className="lg:hidden fixed top-4 left-4 z-[120]">
         <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
           <SheetTrigger asChild>
             <Button
@@ -64,7 +64,7 @@ export function AdminSidebar() {
               <Menu className="h-5 w-5" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-64 p-0 bg-sidebar text-sidebar-foreground">
+          <SheetContent side="left" className="w-64 p-0 bg-sidebar text-sidebar-foreground z-[110]">
             <div className="flex flex-col h-full">
               {/* Logo */}
               <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-4">
