@@ -10,14 +10,17 @@ import { useCart } from '@/hooks/useCart'
 
 import { Honeybadger } from '@honeybadger-io/react'
 
-Honeybadger.notify("Testing Honeybadger!")
-
 export function WishlistPage() {
   const [items, setItems] = useState<WishlistItem[]>([])
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const { success, error: showError } = useToast()
   useCart() // Hook used for cart context availability
+
+  // Test Honeybadger - remove after confirming it works
+  useEffect(() => {
+    Honeybadger.notify("Testing Honeybadger!")
+  }, [])
 
   const loadWishlist = useCallback(async () => {
     try {
