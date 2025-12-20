@@ -1,5 +1,8 @@
 {
   "compilerOptions": {
+    /* Silence deprecation warnings for baseUrl (required until TS7 migration) */
+    "ignoreDeprecations": "6.0",
+
     /* Build info */
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
 
