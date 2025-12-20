@@ -228,8 +228,8 @@ export function Navbar() {
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-80 z-[110]">
-                <div className="flex flex-col gap-6 pt-6">
+              <SheetContent side="left" className="w-80 bg-background flex flex-col p-0 overflow-hidden">
+                <div className="flex flex-col gap-6 p-6 pb-4">
                   {/* Mobile Logo */}
                   <Link 
                     to={ROUTES.HOME} 
@@ -255,7 +255,10 @@ export function Navbar() {
                       className="h-10 w-full rounded-md border bg-background pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                     />
                   </div>
+                </div>
 
+                {/* Scrollable Content Area */}
+                <div className="flex-1 overflow-y-auto px-6 pb-6">
                   {/* Mobile Nav Links */}
                   <nav className="flex flex-col gap-1">
                     {NAV_LINKS.map((link) => (
@@ -304,7 +307,7 @@ export function Navbar() {
                   </nav>
 
                   {/* Mobile Auth Links */}
-                  <div className="border-t pt-4">
+                  <div className="border-t pt-4 mt-6">
                     {user ? (
                       <div className="flex flex-col gap-2">
                         <div className="px-3 py-2 text-sm font-medium truncate">

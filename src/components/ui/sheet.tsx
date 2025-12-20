@@ -1,4 +1,5 @@
 import * as React from "react"
+import { createPortal } from "react-dom"
 import { cva, type VariantProps } from "class-variance-authority"
 import { X } from "lucide-react"
 
@@ -87,7 +88,7 @@ function SheetOverlay({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="sheet-overlay"
       className={cn(
-        "fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm transition-opacity",
+        "fixed inset-0 z-[9998] bg-black/50 backdrop-blur-sm transition-opacity",
         "data-[state=open]:animate-in data-[state=closed]:animate-out",
         "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
         className
@@ -100,7 +101,7 @@ function SheetOverlay({ className, ...props }: React.ComponentProps<"div">) {
 }
 
 const sheetVariants = cva(
-  "fixed z-50 gap-4 bg-background p-6 shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500 data-[state=open]:animate-in data-[state=closed]:animate-out",
+  "fixed z-[9999] gap-4 bg-white dark:bg-slate-950 p-6 shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500 data-[state=open]:animate-in data-[state=closed]:animate-out",
   {
     variants: {
       side: {
@@ -124,9 +125,20 @@ function SheetContent({
 }: React.ComponentProps<"div"> & VariantProps<typeof sheetVariants>) {
   const { open, setOpen } = useSheet()
   
+  // Lock body scroll when sheet is open
+  React.useEffect(() => {
+    if (open) {
+      const originalStyle = window.getComputedStyle(document.body).overflow
+      document.body.style.overflow = 'hidden'
+      return () => {
+        document.body.style.overflow = originalStyle
+      }
+    }
+  }, [open])
+  
   if (!open) return null
 
-  return (
+  const content = (
     <>
       <SheetOverlay />
       <div
@@ -147,6 +159,8 @@ function SheetContent({
       </div>
     </>
   )
+
+  return createPortal(content, document.body)
 }
 
 function SheetHeader({ className, ...props }: React.ComponentProps<"div">) {
