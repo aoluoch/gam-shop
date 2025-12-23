@@ -5,7 +5,7 @@ interface CartSummaryProps {
 }
 
 export function CartSummary({ showDetails = true }: CartSummaryProps) {
-  const { subtotal, shipping, tax, total, itemCount } = useCart()
+  const { subtotal, shipping, tax, total, itemCount, freeShippingThreshold } = useCart()
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-KE', {
@@ -38,7 +38,7 @@ export function CartSummary({ showDetails = true }: CartSummaryProps) {
           )}
           {shipping > 0 && (
             <p className="text-xs text-muted-foreground">
-              Add {formatPrice(5000 - subtotal)} more for free shipping
+              Add {formatPrice(Math.max(0, freeShippingThreshold - subtotal))} more for free shipping
             </p>
           )}
           <hr className="my-2" />

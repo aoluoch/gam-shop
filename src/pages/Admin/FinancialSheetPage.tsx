@@ -31,10 +31,9 @@ interface FinancialSummary {
   totalVAT: number
   totalDeliveryFees: number
   totalNetRevenue: number
+  totalAmountCollected: number
   orders: OrderFinancials[]
 }
-
-const VAT_RATE = 0.16 // 16% VAT in Kenya
 
 export function FinancialSheetPage() {
   const [data, setData] = useState<FinancialSummary | null>(null)
@@ -70,15 +69,20 @@ export function FinancialSheetPage() {
       const orderFinancials: OrderFinancials[] = (orders || []).map(order => {
         const subtotal = Number(order.subtotal)
         const shipping = Number(order.shipping)
-        const tax = Number(order.tax)
+        const tax = Number(order.tax) // Use the actual tax value stored in the order
         const total = Number(order.total)
         
-        // Calculate VAT from the subtotal (VAT is included in the price)
-        // Price including VAT = Price * (1 + VAT_RATE)
-        // So VAT = Price * VAT_RATE / (1 + VAT_RATE) for VAT-inclusive pricing
-        // Or if VAT is separate: VAT = subtotal * VAT_RATE
-        const vatAmount = subtotal * VAT_RATE
+        // Use the actual tax/VAT amount stored in the order
+        // This ensures we use the correct VAT rate that was applied at the time of order
+        // This also handles VAT exemption (0%) correctly
+        const vatAmount = tax
         const netRevenue = subtotal - vatAmount
+
+        // Verify the calculation: subtotal + shipping + tax should equal total
+        const calculatedTotal = subtotal + shipping + tax
+        if (Math.abs(calculatedTotal - total) > 0.01) {
+          console.warn(`Order ${order.order_number} total mismatch: calculated ${calculatedTotal}, stored ${total}`)
+        }
 
         return {
           id: order.id,
@@ -97,12 +101,14 @@ export function FinancialSheetPage() {
       const totalVAT = orderFinancials.reduce((sum, o) => sum + o.vatAmount, 0)
       const totalDeliveryFees = orderFinancials.reduce((sum, o) => sum + o.shipping, 0)
       const totalNetRevenue = orderFinancials.reduce((sum, o) => sum + o.netRevenue, 0)
+      const totalAmountCollected = orderFinancials.reduce((sum, o) => sum + o.total, 0)
 
       setData({
         totalSales,
         totalVAT,
         totalDeliveryFees,
         totalNetRevenue,
+        totalAmountCollected,
         orders: orderFinancials,
       })
     } catch (error) {
@@ -119,7 +125,7 @@ export function FinancialSheetPage() {
   function exportToCSV() {
     if (!data) return
 
-    const headers = ['Order Number', 'Date', 'Subtotal', 'Delivery Fee', 'VAT (16%)', 'Net Revenue', 'Total']
+    const headers = ['Order Number', 'Date', 'Subtotal', 'Delivery Fee', 'VAT', 'Net Revenue', 'Total']
     const rows = data.orders.map(order => [
       order.orderNumber,
       format(new Date(order.date), 'yyyy-MM-dd'),
@@ -132,7 +138,7 @@ export function FinancialSheetPage() {
 
     // Add summary row
     rows.push([])
-    rows.push(['TOTALS', '', data.totalSales.toFixed(2), data.totalDeliveryFees.toFixed(2), data.totalVAT.toFixed(2), data.totalNetRevenue.toFixed(2), (data.totalSales + data.totalDeliveryFees).toFixed(2)])
+    rows.push(['TOTALS', '', data.totalSales.toFixed(2), data.totalDeliveryFees.toFixed(2), data.totalVAT.toFixed(2), data.totalNetRevenue.toFixed(2), data.totalAmountCollected.toFixed(2)])
 
     const csvContent = [
       headers.join(','),
@@ -212,12 +218,12 @@ export function FinancialSheetPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">VAT Collected (16%)</CardTitle>
+            <CardTitle className="text-sm font-medium">VAT Collected</CardTitle>
             <Receipt className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-amber-600">KSh {data.totalVAT.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">To be remitted to KRA</p>
+            <p className="text-xs text-muted-foreground">To be remitted to KRA (if applicable)</p>
           </CardContent>
         </Card>
         <Card>
@@ -253,10 +259,12 @@ export function FinancialSheetPage() {
               <span className="font-medium">Gross Sales (Product Revenue)</span>
               <span className="font-bold">KSh {data.totalSales.toLocaleString()}</span>
             </div>
-            <div className="flex justify-between items-center py-3 border-b text-amber-600">
-              <span className="font-medium">Less: VAT Payable to Government (16%)</span>
-              <span className="font-bold">- KSh {data.totalVAT.toLocaleString()}</span>
-            </div>
+            {data.totalVAT > 0 && (
+              <div className="flex justify-between items-center py-3 border-b text-amber-600">
+                <span className="font-medium">Less: VAT Payable to Government</span>
+                <span className="font-bold">- KSh {data.totalVAT.toLocaleString()}</span>
+              </div>
+            )}
             <div className="flex justify-between items-center py-3 border-b">
               <span className="font-medium">Net Product Revenue</span>
               <span className="font-bold">KSh {data.totalNetRevenue.toLocaleString()}</span>
@@ -266,8 +274,12 @@ export function FinancialSheetPage() {
               <span className="font-bold">+ KSh {data.totalDeliveryFees.toLocaleString()}</span>
             </div>
             <div className="flex justify-between items-center py-3 bg-green-50 dark:bg-green-950 px-4 rounded-lg text-green-700 dark:text-green-400">
-              <span className="text-lg font-semibold">Total Amount You Keep</span>
-              <span className="text-xl font-bold">KSh {(data.totalNetRevenue + data.totalDeliveryFees).toLocaleString()}</span>
+              <span className="text-lg font-semibold">Total Amount Collected</span>
+              <span className="text-xl font-bold">KSh {data.totalAmountCollected.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between items-center py-2 mt-2 text-sm text-muted-foreground border-t pt-2">
+              <span>Verification: Subtotal + Shipping + VAT</span>
+              <span>KSh {(data.totalSales + data.totalDeliveryFees + data.totalVAT).toLocaleString()}</span>
             </div>
           </div>
         </CardContent>
@@ -286,7 +298,7 @@ export function FinancialSheetPage() {
                 <TableHead>Date</TableHead>
                 <TableHead className="text-right">Subtotal</TableHead>
                 <TableHead className="text-right">Delivery</TableHead>
-                <TableHead className="text-right">VAT (16%)</TableHead>
+                <TableHead className="text-right">VAT</TableHead>
                 <TableHead className="text-right">Net Revenue</TableHead>
                 <TableHead className="text-right">Total Paid</TableHead>
               </TableRow>
@@ -298,7 +310,9 @@ export function FinancialSheetPage() {
                   <TableCell>{format(new Date(order.date), 'MMM d, yyyy')}</TableCell>
                   <TableCell className="text-right">KSh {order.subtotal.toLocaleString()}</TableCell>
                   <TableCell className="text-right text-blue-600">KSh {order.shipping.toLocaleString()}</TableCell>
-                  <TableCell className="text-right text-amber-600">KSh {order.vatAmount.toLocaleString()}</TableCell>
+                  <TableCell className="text-right text-amber-600">
+                    {order.vatAmount > 0 ? `KSh ${order.vatAmount.toLocaleString()}` : 'Exempt'}
+                  </TableCell>
                   <TableCell className="text-right text-green-600">KSh {order.netRevenue.toLocaleString()}</TableCell>
                   <TableCell className="text-right font-semibold">KSh {order.total.toLocaleString()}</TableCell>
                 </TableRow>
@@ -319,7 +333,7 @@ export function FinancialSheetPage() {
                   <TableCell className="text-right font-bold text-blue-600">KSh {data.totalDeliveryFees.toLocaleString()}</TableCell>
                   <TableCell className="text-right font-bold text-amber-600">KSh {data.totalVAT.toLocaleString()}</TableCell>
                   <TableCell className="text-right font-bold text-green-600">KSh {data.totalNetRevenue.toLocaleString()}</TableCell>
-                  <TableCell className="text-right font-bold">KSh {(data.totalSales + data.totalDeliveryFees).toLocaleString()}</TableCell>
+                  <TableCell className="text-right font-bold">KSh {data.totalAmountCollected.toLocaleString()}</TableCell>
                 </TableRow>
               </TableFooter>
             )}

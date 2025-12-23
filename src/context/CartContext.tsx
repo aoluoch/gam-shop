@@ -2,11 +2,19 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 import type { CartItem } from '@/types/cart'
 import type { Product } from '@/types/product'
 import { CartContext } from './CartContextDef'
+import { supabase } from '@/services/supabase'
 
 const CART_STORAGE_KEY = 'gam-shop-cart'
-const SHIPPING_THRESHOLD = 5000 // Free shipping over KES 5000
-const SHIPPING_COST = 350 // KES
-const TAX_RATE = 0.16 // 16% VAT
+// Default values (fallback if settings can't be loaded)
+const DEFAULT_SHIPPING_THRESHOLD = 5000 // Free shipping over KES 5000
+const DEFAULT_SHIPPING_COST = 300 // KES (standard shipping rate)
+const DEFAULT_TAX_RATE = 0.16 // 16% VAT
+
+interface StoreSettings {
+  freeShippingThreshold: number
+  standardShippingRate: number
+  taxRate: number
+}
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>(() => {
@@ -21,6 +29,47 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
     return []
   })
+
+  const [storeSettings, setStoreSettings] = useState<StoreSettings>({
+    freeShippingThreshold: DEFAULT_SHIPPING_THRESHOLD,
+    standardShippingRate: DEFAULT_SHIPPING_COST,
+    taxRate: DEFAULT_TAX_RATE,
+  })
+
+  // Load store settings from database on mount
+  useEffect(() => {
+    async function loadStoreSettings() {
+      try {
+        // Use the public function to get settings (accessible to all users)
+        const { data, error } = await supabase.rpc('get_store_settings')
+
+        if (error) {
+          console.error('Error loading store settings:', error)
+          // Use defaults if error
+          return
+        }
+
+        if (data && data.length > 0) {
+          const settings = data[0]
+          const taxRateValue = settings.tax_rate != null ? Number(settings.tax_rate) / 100 : DEFAULT_TAX_RATE
+          setStoreSettings({
+            freeShippingThreshold: settings.free_shipping_threshold != null 
+              ? Number(settings.free_shipping_threshold) 
+              : DEFAULT_SHIPPING_THRESHOLD,
+            standardShippingRate: settings.standard_shipping_rate != null 
+              ? Number(settings.standard_shipping_rate) 
+              : DEFAULT_SHIPPING_COST,
+            taxRate: isNaN(taxRateValue) ? DEFAULT_TAX_RATE : taxRateValue,
+          })
+        }
+      } catch (error) {
+        console.error('Error loading store settings:', error)
+        // Use defaults if error
+      }
+    }
+
+    loadStoreSettings()
+  }, [])
 
   // Persist cart to localStorage
   useEffect(() => {
@@ -41,12 +90,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const shipping = useMemo(() => {
     if (items.length === 0) return 0
-    return subtotal >= SHIPPING_THRESHOLD ? 0 : SHIPPING_COST
-  }, [subtotal, items.length])
+    return subtotal >= storeSettings.freeShippingThreshold ? 0 : storeSettings.standardShippingRate
+  }, [subtotal, items.length, storeSettings.freeShippingThreshold, storeSettings.standardShippingRate])
 
   const tax = useMemo(() => {
-    return Math.round(subtotal * TAX_RATE)
-  }, [subtotal])
+    return Math.round(subtotal * storeSettings.taxRate)
+  }, [subtotal, storeSettings.taxRate])
 
   const total = useMemo(() => {
     return subtotal + shipping + tax
@@ -125,6 +174,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         shipping,
         tax,
         total,
+        freeShippingThreshold: storeSettings.freeShippingThreshold,
         addItem,
         removeItem,
         updateQuantity,
