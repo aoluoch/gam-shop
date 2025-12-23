@@ -1,14 +1,16 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Save, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { useToast } from '@/hooks/useToast'
+import { supabase } from '@/services/supabase'
 
 export function SettingsPage() {
   const { success, error: showError } = useToast()
   const [loading, setLoading] = useState(false)
+  const [loadingSettings, setLoadingSettings] = useState(true)
 
   const [storeSettings, setStoreSettings] = useState({
     storeName: 'GAM Shop',
@@ -24,15 +26,97 @@ export function SettingsPage() {
     expressShippingRate: '500',
   })
 
+  // Load settings from database on mount
+  useEffect(() => {
+    async function loadSettings() {
+      try {
+        const { data, error } = await supabase
+          .from('store_settings')
+          .select('*')
+          .order('updated_at', { ascending: false })
+          .limit(1)
+          .single()
+
+        if (error && error.code !== 'PGRST116') {
+          // PGRST116 is "no rows returned" - that's okay, we'll use defaults
+          console.error('Error loading settings:', error)
+          showError('Failed to load settings')
+        } else if (data) {
+          setStoreSettings({
+            storeName: data.store_name || 'GAM Shop',
+            storeEmail: data.store_email || 'info@gamshop.com',
+            storePhone: data.store_phone || '+254 700 000 000',
+            currency: data.currency || 'KES',
+            taxRate: data.tax_rate ? String(data.tax_rate) : '16',
+          })
+
+          setShippingSettings({
+            freeShippingThreshold: data.free_shipping_threshold
+              ? String(data.free_shipping_threshold)
+              : '5000',
+            standardShippingRate: data.standard_shipping_rate
+              ? String(data.standard_shipping_rate)
+              : '300',
+            expressShippingRate: data.express_shipping_rate
+              ? String(data.express_shipping_rate)
+              : '500',
+          })
+        }
+      } catch (error) {
+        console.error('Error loading settings:', error)
+        showError('Failed to load settings')
+      } finally {
+        setLoadingSettings(false)
+      }
+    }
+
+    loadSettings()
+  }, [showError])
+
   async function handleSaveStore(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     try {
-      // In a real app, this would save to the database
-      await new Promise((resolve) => setTimeout(resolve, 500))
-      success('Store settings saved')
-    } catch {
-      showError('Failed to save settings')
+      // Get existing settings ID if it exists
+      const { data: existing } = await supabase
+        .from('store_settings')
+        .select('id')
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .single()
+
+      const updateData = {
+        store_name: storeSettings.storeName,
+        store_email: storeSettings.storeEmail,
+        store_phone: storeSettings.storePhone,
+        currency: storeSettings.currency,
+        tax_rate: parseFloat(storeSettings.taxRate) || 0,
+      }
+
+      let error
+      if (existing?.id) {
+        // Update existing record
+        const { error: updateError } = await supabase
+          .from('store_settings')
+          .update(updateData)
+          .eq('id', existing.id)
+        error = updateError
+      } else {
+        // Insert new record
+        const { error: insertError } = await supabase
+          .from('store_settings')
+          .insert(updateData)
+        error = insertError
+      }
+
+      if (error) {
+        throw error
+      }
+
+      success('Store settings saved successfully')
+    } catch (error: any) {
+      console.error('Error saving store settings:', error)
+      showError(error?.message || 'Failed to save store settings')
     } finally {
       setLoading(false)
     }
@@ -42,14 +126,66 @@ export function SettingsPage() {
     e.preventDefault()
     setLoading(true)
     try {
-      // In a real app, this would save to the database
-      await new Promise((resolve) => setTimeout(resolve, 500))
-      success('Shipping settings saved')
-    } catch {
-      showError('Failed to save settings')
+      // Get existing settings ID if it exists
+      const { data: existing } = await supabase
+        .from('store_settings')
+        .select('id')
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .single()
+
+      const updateData = {
+        free_shipping_threshold: parseFloat(shippingSettings.freeShippingThreshold) || 0,
+        standard_shipping_rate: parseFloat(shippingSettings.standardShippingRate) || 0,
+        express_shipping_rate: parseFloat(shippingSettings.expressShippingRate) || 0,
+      }
+
+      let error
+      if (existing?.id) {
+        // Update existing record
+        const { error: updateError } = await supabase
+          .from('store_settings')
+          .update(updateData)
+          .eq('id', existing.id)
+        error = updateError
+      } else {
+        // Insert new record with default store settings
+        const { error: insertError } = await supabase.from('store_settings').insert({
+          ...updateData,
+          store_name: storeSettings.storeName,
+          store_email: storeSettings.storeEmail,
+          store_phone: storeSettings.storePhone,
+          currency: storeSettings.currency,
+          tax_rate: parseFloat(storeSettings.taxRate) || 0,
+        })
+        error = insertError
+      }
+
+      if (error) {
+        throw error
+      }
+
+      success('Shipping settings saved successfully')
+    } catch (error: any) {
+      console.error('Error saving shipping settings:', error)
+      showError(error?.message || 'Failed to save shipping settings')
     } finally {
       setLoading(false)
     }
+  }
+
+  if (loadingSettings) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold">Settings</h1>
+          <p className="text-muted-foreground">Configure your store settings</p>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </div>
+    )
   }
 
   return (
