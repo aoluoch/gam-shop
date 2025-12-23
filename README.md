@@ -473,4 +473,4 @@ PostgreSQL functions available:
 
 ---
 
-For questions or support, please contact [your-email@example.com] or open an issue on GitHub.
+For questions or support, please contact [aoluoch271@gmail.com] or open an issue on GitHub.
