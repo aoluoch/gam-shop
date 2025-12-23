@@ -114,9 +114,10 @@ export function SettingsPage() {
       }
 
       success('Store settings saved successfully')
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error saving store settings:', error)
-      showError(error?.message || 'Failed to save store settings')
+      const errorMessage = error instanceof Error ? error.message : 'Failed to save store settings'
+      showError(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -166,9 +167,10 @@ export function SettingsPage() {
       }
 
       success('Shipping settings saved successfully')
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error saving shipping settings:', error)
-      showError(error?.message || 'Failed to save shipping settings')
+      const errorMessage = error instanceof Error ? error.message : 'Failed to save shipping settings'
+      showError(errorMessage)
     } finally {
       setLoading(false)
     }
