@@ -276,7 +276,12 @@ export function ProductForm({ product, onSubmit, loading }: ProductFormProps) {
                   variants={formData.variants || []}
                   onVariantsChange={(variants) => {
                     const totalStock = variants.reduce((sum, v) => sum + v.stock, 0)
-                    setFormData(prev => ({ ...prev, variants, stock: totalStock }))
+                    setFormData(prev => ({ 
+                      ...prev, 
+                      variants, 
+                      stock: totalStock,
+                      hasVariants: variants.length > 0 // Ensure hasVariants is true if variants exist
+                    }))
                   }}
                 />
               )}

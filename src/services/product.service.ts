@@ -13,7 +13,12 @@ export async function getProducts(): Promise<Product[]> {
     return []
   }
 
-  return data.map(mapProduct)
+  const products = data.map(mapProduct)
+  
+  // Check which products have variants
+  await enrichProductsWithVariants(products)
+  
+  return products
 }
 
 export async function getFeaturedProducts(): Promise<Product[]> {
@@ -30,7 +35,12 @@ export async function getFeaturedProducts(): Promise<Product[]> {
     return []
   }
 
-  return data.map(mapProduct)
+  const products = data.map(mapProduct)
+  
+  // Check which products have variants
+  await enrichProductsWithVariants(products)
+  
+  return products
 }
 
 export async function getProductsByCategory(category: string): Promise<Product[]> {
@@ -46,7 +56,12 @@ export async function getProductsByCategory(category: string): Promise<Product[]
     return []
   }
 
-  return data.map(mapProduct)
+  const products = data.map(mapProduct)
+  
+  // Check which products have variants
+  await enrichProductsWithVariants(products)
+  
+  return products
 }
 
 export async function getProductById(id: string): Promise<Product | null> {
@@ -115,4 +130,35 @@ function mapVariant(data: Record<string, unknown>) {
     createdAt: data.created_at as string,
     updatedAt: data.updated_at as string,
   }
+}
+
+/**
+ * Enriches products with variant information
+ * Efficiently checks which products have active variants
+ */
+async function enrichProductsWithVariants(products: Product[]): Promise<void> {
+  if (products.length === 0) return
+
+  const productIds = products.map(p => p.id)
+
+  // Fetch all variants for these products in one query
+  const { data: variantsData } = await supabase
+    .from('product_variants')
+    .select('product_id')
+    .in('product_id', productIds)
+    .eq('is_active', true)
+
+  if (!variantsData) return
+
+  // Create a set of product IDs that have variants
+  const productsWithVariants = new Set(
+    variantsData.map(v => v.product_id as string)
+  )
+
+  // Set hasVariants flag for products that have variants
+  products.forEach(product => {
+    if (productsWithVariants.has(product.id)) {
+      product.hasVariants = true
+    }
+  })
 }

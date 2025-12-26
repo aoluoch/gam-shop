@@ -64,7 +64,7 @@ export function AdminSidebar() {
               <Menu className="h-5 w-5" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-64 p-0 bg-sidebar text-sidebar-foreground z-[110]">
+          <SheetContent side="left" className="w-64 p-0 bg-sidebar text-sidebar-foreground">
             <div className="flex flex-col h-full">
               {/* Logo */}
               <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-4">
