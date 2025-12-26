@@ -123,8 +123,11 @@ export async function createProduct(
 
   const createdProduct = mapProduct(data)
 
-  // Create variants if provided (check variants array - if variants exist, hasVariants should be true)
-  if (product.variants && product.variants.length > 0) {
+  // Create variants if hasVariants is true and variants array is provided
+  // Check both hasVariants flag and variants array to ensure variants are created
+  const shouldCreateVariants = product.hasVariants && product.variants && product.variants.length > 0
+
+  if (shouldCreateVariants) {
     // Filter out invalid variants (must have size and color)
     const validVariants = product.variants.filter(v => v.size && v.color)
     
@@ -145,9 +148,10 @@ export async function createProduct(
       is_active: true,
     }))
 
-    const { error: variantError } = await supabase
+    const { data: insertedVariants, error: variantError } = await supabase
       .from('product_variants')
       .insert(variantsToInsert)
+      .select()
 
     if (variantError) {
       console.error('Error creating variants:', variantError)
@@ -211,10 +215,9 @@ export async function updateProduct(
 
   // Handle variants update
   // Process variants if they're provided, or if hasVariants is explicitly set to false (to remove them)
-  // Also process if variants array exists (even if hasVariants flag is not set)
   if (updates.variants !== undefined || updates.hasVariants !== undefined) {
-    if (updates.hasVariants === false || (updates.variants !== undefined && (!updates.variants || updates.variants.length === 0))) {
-      // Remove all variants if hasVariants is false or variants array is empty
+    // Case 1: Remove all variants if hasVariants is explicitly false
+    if (updates.hasVariants === false) {
       const { error: deleteError } = await supabase
         .from('product_variants')
         .delete()
@@ -224,44 +227,60 @@ export async function updateProduct(
         console.error('Error deleting variants:', deleteError)
         return { error: new Error(`Failed to remove variants: ${deleteError.message}`) }
       }
-    } else if (updates.variants && updates.variants.length > 0) {
-      // Filter out invalid variants (must have size and color)
-      const validVariants = updates.variants.filter(v => v.size && v.color)
-      
-      if (validVariants.length === 0) {
-        return { error: new Error('Variants must have both size and color specified') }
-      }
+    }
+    // Case 2: Update variants if variants array is provided (even if empty, which means remove all)
+    else if (updates.variants !== undefined) {
+      if (updates.variants.length === 0) {
+        // Remove all variants if variants array is explicitly empty
+        const { error: deleteError } = await supabase
+          .from('product_variants')
+          .delete()
+          .eq('product_id', id)
 
-      // Delete existing variants and insert new ones
-      const { error: deleteError } = await supabase
-        .from('product_variants')
-        .delete()
-        .eq('product_id', id)
+        if (deleteError) {
+          console.error('Error deleting variants:', deleteError)
+          return { error: new Error(`Failed to remove variants: ${deleteError.message}`) }
+        }
+      } else {
+        // Filter out invalid variants (must have size and color)
+        const validVariants = updates.variants.filter(v => v.size && v.color)
+        
+        if (validVariants.length === 0) {
+          return { error: new Error('Variants must have both size and color specified') }
+        }
 
-      if (deleteError) {
-        console.error('Error deleting existing variants:', deleteError)
-        return { error: new Error(`Failed to update variants: ${deleteError.message}`) }
-      }
+        // Delete existing variants and insert new ones
+        const { error: deleteError } = await supabase
+          .from('product_variants')
+          .delete()
+          .eq('product_id', id)
 
-      const variantsToInsert = validVariants.map(v => ({
-        product_id: id,
-        size: v.size,
-        color: v.color,
-        stock: v.stock || 0,
-        sku_suffix: v.skuSuffix || null,
-        price_adjustment: v.priceAdjustment || 0,
-        is_active: true,
-      }))
+        if (deleteError) {
+          console.error('Error deleting existing variants:', deleteError)
+          return { error: new Error(`Failed to update variants: ${deleteError.message}`) }
+        }
 
-      const { error: variantError } = await supabase
-        .from('product_variants')
-        .insert(variantsToInsert)
+        const variantsToInsert = validVariants.map(v => ({
+          product_id: id,
+          size: v.size,
+          color: v.color,
+          stock: v.stock || 0,
+          sku_suffix: v.skuSuffix || null,
+          price_adjustment: v.priceAdjustment || 0,
+          is_active: true,
+        }))
 
-      if (variantError) {
-        console.error('Error inserting variants:', variantError)
-        return { error: new Error(`Failed to save variants: ${variantError.message}`) }
+        const { error: variantError } = await supabase
+          .from('product_variants')
+          .insert(variantsToInsert)
+
+        if (variantError) {
+          console.error('Error inserting variants:', variantError)
+          return { error: new Error(`Failed to save variants: ${variantError.message}`) }
+        }
       }
     }
+    // Case 3: If hasVariants is true but variants is undefined, don't touch variants (they remain as-is)
   }
 
   return { error: null }

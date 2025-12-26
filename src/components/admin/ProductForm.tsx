@@ -114,15 +114,43 @@ export function ProductForm({ product, onSubmit, loading }: ProductFormProps) {
       newErrors.stock = 'Stock cannot be negative'
     }
 
+    // Validate variants for apparel products
+    if (formData.category === 'apparel' && formData.hasVariants) {
+      if (!formData.variants || formData.variants.length === 0) {
+        newErrors.variants = 'Please add at least one variant (size and color combination). Select sizes and colors, then click "Generate Variants".'
+      } else {
+        // Check that all variants have both size and color
+        const invalidVariants = formData.variants.filter(v => !v.size || !v.color)
+        if (invalidVariants.length > 0) {
+          newErrors.variants = 'All variants must have both size and color specified'
+        }
+      }
+    }
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!validateForm()) return
+    
+    if (!validateForm()) {
+      return
+    }
 
-    await onSubmit(formData)
+    // Ensure variants are always included as an array (even if empty)
+    // For apparel products with hasVariants=true, ensure variants array is passed
+    const variants = formData.variants || []
+    const hasVariants = formData.hasVariants || false
+    
+    // For apparel category, if hasVariants is checked, ensure variants are included
+    // If hasVariants is true but no variants, that's an error state we should handle
+    const submitData: ProductFormData = {
+      ...formData,
+      variants,
+      hasVariants: formData.category === 'apparel' ? hasVariants : false,
+    }
+
+    await onSubmit(submitData)
   }
 
   const handleChange = (
@@ -253,39 +281,68 @@ export function ProductForm({ product, onSubmit, loading }: ProductFormProps) {
 
           {/* Variant Manager for Apparel */}
           {formData.category === 'apparel' && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  id="hasVariants"
-                  checked={formData.hasVariants}
-                  onChange={(e) => setFormData(prev => ({ 
-                    ...prev, 
-                    hasVariants: e.target.checked,
-                    variants: e.target.checked ? prev.variants : []
-                  }))}
-                  className="h-4 w-4 rounded border-gray-300"
-                />
-                <Label htmlFor="hasVariants" className="text-base font-medium">
-                  This product has size/color variants
-                </Label>
-              </div>
-
-              {formData.hasVariants && (
-                <VariantManager
-                  variants={formData.variants || []}
-                  onVariantsChange={(variants) => {
-                    const totalStock = variants.reduce((sum, v) => sum + v.stock, 0)
-                    setFormData(prev => ({ 
+            <Card>
+              <CardHeader>
+                <CardTitle>Product Variants</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="hasVariants"
+                    checked={formData.hasVariants}
+                    onChange={(e) => setFormData(prev => ({ 
                       ...prev, 
-                      variants, 
-                      stock: totalStock,
-                      hasVariants: variants.length > 0 // Ensure hasVariants is true if variants exist
-                    }))
-                  }}
-                />
-              )}
-            </div>
+                      hasVariants: e.target.checked,
+                      variants: e.target.checked ? prev.variants : []
+                    }))}
+                    className="h-4 w-4 rounded border-gray-300"
+                  />
+                  <Label htmlFor="hasVariants" className="text-base font-medium">
+                    This product has size/color variants
+                  </Label>
+                </div>
+
+                {formData.hasVariants && (
+                  <>
+                    {(!formData.variants || formData.variants.length === 0) && (
+                      <div className="p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-md">
+                        <p className="text-sm text-amber-800 dark:text-amber-200 font-medium mb-1">
+                          ⚠️ No variants generated yet
+                        </p>
+                        <p className="text-sm text-amber-700 dark:text-amber-300">
+                          Please select sizes and colors below, then click "Generate Variants" to create variant combinations.
+                        </p>
+                      </div>
+                    )}
+                    
+                    <VariantManager
+                      variants={formData.variants || []}
+                      onVariantsChange={(variants) => {
+                        const totalStock = variants.reduce((sum, v) => sum + v.stock, 0)
+                        
+                        setFormData(prev => ({ 
+                          ...prev, 
+                          variants, 
+                          stock: totalStock,
+                          hasVariants: variants.length > 0 // Ensure hasVariants is true if variants exist
+                        }))
+                        
+                        // Clear variant error when variants are added
+                        if (variants.length > 0 && errors.variants) {
+                          setErrors(prev => ({ ...prev, variants: '' }))
+                        }
+                      }}
+                    />
+                    {errors.variants && (
+                      <div className="p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-md">
+                        <p className="text-sm text-red-600 dark:text-red-400 font-medium">{errors.variants}</p>
+                      </div>
+                    )}
+                  </>
+                )}
+              </CardContent>
+            </Card>
           )}
         </div>
 

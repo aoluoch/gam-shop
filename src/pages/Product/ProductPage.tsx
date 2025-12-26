@@ -69,11 +69,15 @@ export function ProductPage() {
       setProduct(mappedProduct)
 
       // Fetch variants
-      const { data: variantsData } = await supabase
+      const { data: variantsData, error: variantsError } = await supabase
         .from('product_variants')
         .select('*')
         .eq('product_id', productId)
         .eq('is_active', true)
+
+      if (variantsError) {
+        console.error('Error fetching variants:', variantsError)
+      }
 
       if (variantsData && variantsData.length > 0) {
         const mappedVariants: ProductVariant[] = variantsData.map(v => ({
@@ -89,6 +93,8 @@ export function ProductPage() {
         setVariants(mappedVariants)
         mappedProduct.hasVariants = true
         mappedProduct.variants = mappedVariants
+      } else {
+        setVariants([])
       }
     } catch (err) {
       console.error('Error loading product:', err)

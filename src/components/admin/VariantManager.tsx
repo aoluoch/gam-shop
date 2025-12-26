@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Trash2, AlertCircle } from 'lucide-react'
+import { Plus, Trash2, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -26,6 +26,7 @@ export function VariantManager({
   )
   const [showBulkAdd, setShowBulkAdd] = useState(false)
   const [bulkStock, setBulkStock] = useState(10)
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false)
 
   const toggleSize = (size: string) => {
     setSelectedSizes(prev => {
@@ -72,8 +73,16 @@ export function VariantManager({
       }
     }
     
+    if (newVariants.length === 0) {
+      alert('Please select at least one size and one color before generating variants.')
+      return
+    }
+    
     onVariantsChange(newVariants)
     setShowBulkAdd(false)
+    setShowSuccessMessage(true)
+    // Hide success message after 3 seconds
+    setTimeout(() => setShowSuccessMessage(false), 3000)
   }
 
   const updateVariantStock = (size: string, color: string, stock: number) => {
@@ -153,6 +162,16 @@ export function VariantManager({
           </div>
         </div>
 
+        {/* Success Message */}
+        {showSuccessMessage && variants.length > 0 && (
+          <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-md">
+            <CheckCircle2 className="h-4 w-4 text-green-600" />
+            <span className="text-sm text-green-700 dark:text-green-300">
+              Successfully generated {variants.length} variant{variants.length !== 1 ? 's' : ''}!
+            </span>
+          </div>
+        )}
+
         {/* Generate Variants */}
         {selectedSizes.length > 0 && selectedColors.length > 0 && (
           <div className="space-y-3">
@@ -164,7 +183,7 @@ export function VariantManager({
                 className="w-full"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Generate Variants ({selectedSizes.length} sizes × {selectedColors.length} colors)
+                Generate Variants ({selectedSizes.length} sizes × {selectedColors.length} colors = {selectedSizes.length * selectedColors.length} variants)
               </Button>
             ) : (
               <div className="flex items-end gap-3 p-4 bg-muted/50 rounded-lg">
@@ -190,6 +209,19 @@ export function VariantManager({
                 </Button>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Warning if sizes/colors selected but no variants generated */}
+        {selectedSizes.length > 0 && selectedColors.length > 0 && variants.length === 0 && (
+          <div className="p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md">
+            <p className="text-sm text-blue-800 dark:text-blue-200 font-medium mb-1">
+              📋 Ready to generate variants
+            </p>
+            <p className="text-sm text-blue-700 dark:text-blue-300">
+              You've selected {selectedSizes.length} size{selectedSizes.length !== 1 ? 's' : ''} and {selectedColors.length} color{selectedColors.length !== 1 ? 's' : ''}. 
+              Click "Generate Variants" above to create {selectedSizes.length * selectedColors.length} variant combination{selectedSizes.length * selectedColors.length !== 1 ? 's' : ''}.
+            </p>
           </div>
         )}
 
