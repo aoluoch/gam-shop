@@ -127,7 +127,7 @@ export async function createProduct(
   // Check both hasVariants flag and variants array to ensure variants are created
   const shouldCreateVariants = product.hasVariants && product.variants && product.variants.length > 0
 
-  if (shouldCreateVariants) {
+  if (shouldCreateVariants && product.variants) {
     // Filter out invalid variants (must have size and color)
     const validVariants = product.variants.filter(v => v.size && v.color)
     
@@ -160,16 +160,16 @@ export async function createProduct(
         data: createdProduct, 
         error: new Error(`Product created but variants failed to save: ${variantError.message}`) 
       }
-    } else {
+    } else if (insertedVariants) {
       createdProduct.hasVariants = true
-      createdProduct.variants = product.variants.map((v) => ({
-        id: '',
+      createdProduct.variants = insertedVariants.map((v) => ({
+        id: v.id,
         productId: createdProduct.id,
         size: v.size,
         color: v.color,
         stock: v.stock,
-        skuSuffix: v.skuSuffix,
-        priceAdjustment: v.priceAdjustment,
+        skuSuffix: v.sku_suffix || undefined,
+        priceAdjustment: v.price_adjustment ? Number(v.price_adjustment) : undefined,
         isActive: true,
       }))
     }

@@ -204,20 +204,39 @@ export function ProductPage() {
 
   const currentStock = useMemo(() => {
     if (variants.length > 0) {
-      return selectedVariant?.stock ?? 0
+      // For products with variants, only return stock if a variant is selected
+      // Otherwise return null to indicate stock is unknown until selection
+      if (selectedSize && selectedColor) {
+        return selectedVariant?.stock ?? 0
+      }
+      return null // Stock unknown until variant is selected
     }
     return product?.stock ?? 0
-  }, [variants, selectedVariant, product])
+  }, [variants, selectedVariant, product, selectedSize, selectedColor])
 
-  const isOutOfStock = currentStock === 0
+  // Only show "Out of Stock" if:
+  // 1. For variant products: a variant is selected AND it's out of stock
+  // 2. For non-variant products: product stock is 0
+  const isOutOfStock = useMemo(() => {
+    if (variants.length > 0) {
+      // For variant products, only show out of stock if variant is selected and has 0 stock
+      if (selectedSize && selectedColor && currentStock !== null) {
+        return currentStock === 0
+      }
+      return false // Don't show out of stock until variant is selected
+    }
+    return currentStock !== null && currentStock === 0
+  }, [variants.length, selectedSize, selectedColor, currentStock])
 
   const canAddToCart = useMemo(() => {
     if (!product) return false
     if (variants.length > 0) {
-      return selectedSize && selectedColor && currentStock > 0 && quantity <= currentStock
+      // For variant products, require size and color selection and stock > 0
+      return selectedSize && selectedColor && currentStock !== null && currentStock > 0 && quantity <= currentStock
     }
-    return currentStock > 0 && quantity <= currentStock
-  }, [product, variants, selectedSize, selectedColor, currentStock, quantity])
+    // For non-variant products, just check stock
+    return currentStock !== null && currentStock > 0 && quantity <= currentStock
+  }, [product, variants.length, selectedSize, selectedColor, currentStock, quantity])
 
   const handleAddToCart = () => {
     if (!product || !canAddToCart) return
@@ -449,7 +468,7 @@ export function ProductPage() {
                 </div>
 
                 {/* Stock indicator */}
-                {selectedSize && selectedColor && (
+                {selectedSize && selectedColor && currentStock !== null && (
                   <div className={cn(
                     'flex items-center gap-2 text-sm',
                     currentStock > 0 ? 'text-green-600' : 'text-red-600'
@@ -492,9 +511,13 @@ export function ProductPage() {
                   {quantity}
                 </span>
                 <button
-                  onClick={() => setQuantity(Math.min(currentStock, quantity + 1))}
+                  onClick={() => {
+                    if (currentStock !== null) {
+                      setQuantity(Math.min(currentStock, quantity + 1))
+                    }
+                  }}
                   className="px-3 py-2 hover:bg-muted transition-colors"
-                  disabled={quantity >= currentStock}
+                  disabled={currentStock === null || quantity >= currentStock}
                 >
                   +
                 </button>
