@@ -110,6 +110,77 @@ export function ProductPage() {
     }
   }, [id, loadProduct])
 
+  // Set up realtime subscription for stock updates
+  useEffect(() => {
+    if (!id) return
+
+    const channel = supabase
+      .channel(`product-stock-${id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'products',
+          filter: `id=eq.${id}`,
+        },
+        (payload) => {
+          // Update product stock in real-time
+          if (payload.new) {
+            const newStock = Number(payload.new.stock)
+            setProduct(prev => prev ? { ...prev, stock: newStock } : null)
+          }
+        }
+      )
+      .subscribe()
+
+    // Also subscribe to variant stock updates (always subscribe, variants may be loaded later)
+    const variantChannel = supabase
+      .channel(`product-variants-stock-${id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'product_variants',
+          filter: `product_id=eq.${id}`,
+        },
+        () => {
+          // Reload variants when stock changes
+          if (id) {
+            supabase
+              .from('product_variants')
+              .select('*')
+              .eq('product_id', id)
+              .eq('is_active', true)
+              .then(({ data: variantsData }) => {
+                if (variantsData && variantsData.length > 0) {
+                  const mappedVariants: ProductVariant[] = variantsData.map(v => ({
+                    id: v.id,
+                    productId: v.product_id,
+                    size: v.size,
+                    color: v.color,
+                    stock: Number(v.stock),
+                    skuSuffix: v.sku_suffix,
+                    priceAdjustment: v.price_adjustment ? Number(v.price_adjustment) : undefined,
+                    isActive: v.is_active,
+                  }))
+                  setVariants(mappedVariants)
+                } else {
+                  setVariants([])
+                }
+              })
+          }
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+      supabase.removeChannel(variantChannel)
+    }
+  }, [id])
+
   const checkWishlistStatus = useCallback(async () => {
     if (!id) return
     const inList = await isInWishlist(id)

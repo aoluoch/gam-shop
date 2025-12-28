@@ -47,6 +47,7 @@ import type { Product } from '@/types/product';
 import { HeroSection, FeaturedProducts, CategorySection, TestimonialsSection } from '@/components/home';
 import { ContactForm } from '@/components/contact';
 import { Loader2 } from 'lucide-react';
+import { supabase } from '@/services/supabase';
 
 // Placeholder pages - will be replaced with actual page components
 function HomePage() {
@@ -69,6 +70,33 @@ function ShopPage() {
       setProducts(data);
       setLoading(false);
     });
+  }, []);
+
+  // Set up realtime subscription for stock updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('shop-products-stock')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'products',
+        },
+        (payload) => {
+          // Update product stock in real-time
+          setProducts(prev => prev.map(product => 
+            product.id === payload.new.id 
+              ? { ...product, stock: Number(payload.new.stock) }
+              : product
+          ));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   if (loading) {
@@ -109,6 +137,34 @@ function BooksPage() {
     });
   }, []);
 
+  // Set up realtime subscription for stock updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('books-products-stock')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'products',
+          filter: 'category=eq.books',
+        },
+        (payload) => {
+          // Update product stock in real-time
+          setBooks(prev => prev.map(product => 
+            product.id === payload.new.id 
+              ? { ...product, stock: Number(payload.new.stock) }
+              : product
+          ));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-12 flex items-center justify-center min-h-[40vh]">
@@ -147,6 +203,34 @@ function ApparelPage() {
     });
   }, []);
 
+  // Set up realtime subscription for stock updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('apparel-products-stock')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'products',
+          filter: 'category=eq.apparel',
+        },
+        (payload) => {
+          // Update product stock in real-time
+          setApparel(prev => prev.map(product => 
+            product.id === payload.new.id 
+              ? { ...product, stock: Number(payload.new.stock) }
+              : product
+          ));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-12 flex items-center justify-center min-h-[40vh]">
@@ -183,6 +267,34 @@ function AccessoriesPage() {
       setAccessories(data);
       setLoading(false);
     });
+  }, []);
+
+  // Set up realtime subscription for stock updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('accessories-products-stock')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'products',
+          filter: 'category=eq.accessories',
+        },
+        (payload) => {
+          // Update product stock in real-time
+          setAccessories(prev => prev.map(product => 
+            product.id === payload.new.id 
+              ? { ...product, stock: Number(payload.new.stock) }
+              : product
+          ));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   if (loading) {

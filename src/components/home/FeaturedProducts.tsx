@@ -6,6 +6,7 @@ import { ProductCard } from '@/components/product'
 import { getFeaturedProducts } from '@/services/product.service'
 import type { Product } from '@/types/product'
 import { ROUTES } from '@/constants/routes'
+import { supabase } from '@/services/supabase'
 
 export function FeaturedProducts() {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([])
@@ -16,6 +17,34 @@ export function FeaturedProducts() {
       setFeaturedProducts(data)
       setLoading(false)
     })
+  }, [])
+
+  // Set up realtime subscription for stock updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('featured-products-stock')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'products',
+          filter: 'featured=eq.true',
+        },
+        (payload) => {
+          // Update product stock in real-time
+          setFeaturedProducts(prev => prev.map(product => 
+            product.id === payload.new.id 
+              ? { ...product, stock: Number(payload.new.stock) }
+              : product
+          ));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [])
 
   if (loading) {

@@ -109,16 +109,94 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       // In production, you'd want to handle this with a transaction
     }
 
-    // Update product stock
+    // Update product stock - check availability and handle out-of-stock scenarios
+    const stockUpdateErrors: string[] = []
     for (const item of input.items) {
-      const { error: stockError } = await supabase
-        .from('products')
-        .update({ stock: item.product.stock - item.quantity })
-        .eq('id', item.product.id)
-        .gte('stock', item.quantity)
+      // Check if product has variants (size and color selected)
+      const hasVariants = item.selectedSize && item.selectedColor
 
-      if (stockError) {
-        console.error('Error updating stock for product:', item.product.id, stockError)
+      if (hasVariants) {
+        // For products with variants, update variant stock
+        const { data: variantData, error: variantFetchError } = await supabase
+          .from('product_variants')
+          .select('stock, id')
+          .eq('product_id', item.product.id)
+          .eq('size', item.selectedSize)
+          .eq('color', item.selectedColor)
+          .eq('is_active', true)
+          .single()
+
+        if (variantFetchError || !variantData) {
+          stockUpdateErrors.push(
+            `Failed to find variant for ${item.product.name} (${item.selectedSize}, ${item.selectedColor})`
+          )
+          console.error('Error fetching variant stock:', item.product.id, variantFetchError)
+          continue
+        }
+
+        const variantStock = Number(variantData.stock)
+        if (variantStock < item.quantity) {
+          stockUpdateErrors.push(
+            `${item.product.name} (${item.selectedSize}, ${item.selectedColor}) is out of stock. Available: ${variantStock}, Requested: ${item.quantity}`
+          )
+          continue
+        }
+
+        // Update variant stock atomically
+        const { error: variantStockError } = await supabase
+          .from('product_variants')
+          .update({ stock: variantStock - item.quantity })
+          .eq('id', variantData.id)
+          .gte('stock', item.quantity) // Ensure stock is still >= quantity (race condition protection)
+
+        if (variantStockError) {
+          stockUpdateErrors.push(
+            `Failed to update variant stock for ${item.product.name} (${item.selectedSize}, ${item.selectedColor})`
+          )
+          console.error('Error updating variant stock:', variantData.id, variantStockError)
+        }
+      } else {
+        // For products without variants, update main product stock
+        const { data: currentProduct, error: fetchError } = await supabase
+          .from('products')
+          .select('stock')
+          .eq('id', item.product.id)
+          .single()
+
+        if (fetchError || !currentProduct) {
+          stockUpdateErrors.push(`Failed to verify stock for ${item.product.name}`)
+          console.error('Error fetching product stock:', item.product.id, fetchError)
+          continue
+        }
+
+        const currentStock = Number(currentProduct.stock)
+        if (currentStock < item.quantity) {
+          stockUpdateErrors.push(
+            `${item.product.name} is out of stock. Available: ${currentStock}, Requested: ${item.quantity}`
+          )
+          continue
+        }
+
+        // Update stock atomically - only if sufficient stock exists
+        const { error: stockError } = await supabase
+          .from('products')
+          .update({ stock: currentStock - item.quantity })
+          .eq('id', item.product.id)
+          .gte('stock', item.quantity) // Ensure stock is still >= quantity (race condition protection)
+
+        if (stockError) {
+          stockUpdateErrors.push(`Failed to update stock for ${item.product.name}`)
+          console.error('Error updating stock for product:', item.product.id, stockError)
+        }
+      }
+    }
+
+    // If any stock updates failed, return error
+    if (stockUpdateErrors.length > 0) {
+      console.error('Stock update errors:', stockUpdateErrors)
+      return { 
+        success: false, 
+        error: `Stock update failed: ${stockUpdateErrors.join('; ')}` 
       }
     }
 
