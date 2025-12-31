@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Mail, User, MessageSquare, Send, Loader2 } from 'lucide-react'
+import { Mail, User, MessageSquare, Send, Loader2, LogIn } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -8,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { submitContactMessage } from '@/services/contact.service'
 import { useToast } from '@/hooks/useToast'
 import { useAuth } from '@/hooks/useAuth'
+import { ROUTES } from '@/constants/routes'
 import type { ContactFormData } from '@/types/contact'
 
 export function ContactForm() {
@@ -31,6 +33,11 @@ export function ContactForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
+    if (!user) {
+      showError('Please sign in to send a message')
+      return
+    }
+
     if (!formData.name || !formData.email || !formData.subject || !formData.message) {
       showError('Please fill in all fields')
       return
@@ -51,6 +58,47 @@ export function ContactForm() {
     } finally {
       setLoading(false)
     }
+  }
+
+  // Show login prompt if user is not authenticated
+  if (!user) {
+    return (
+      <Card className="w-full max-w-2xl mx-auto">
+        <CardHeader>
+          <CardTitle className="text-2xl flex items-center gap-2">
+            <MessageSquare className="h-6 w-6" />
+            Send us a Message
+          </CardTitle>
+          <CardDescription>
+            Have a question or feedback? We'd love to hear from you.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <div className="rounded-full bg-muted p-4 mb-4">
+              <LogIn className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <h3 className="text-lg font-semibold mb-2">Sign in Required</h3>
+            <p className="text-muted-foreground mb-6 max-w-md">
+              You need to have an account to send messages. Please sign in or create an account to contact us.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button asChild>
+                <Link to={ROUTES.LOGIN}>
+                  <LogIn className="mr-2 h-4 w-4" />
+                  Sign In
+                </Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link to={ROUTES.REGISTER}>
+                  Create Account
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
@@ -139,11 +187,9 @@ export function ContactForm() {
             )}
           </Button>
 
-          {user && (
-            <p className="text-sm text-muted-foreground text-center">
-              You're logged in. Your message will be associated with your account.
-            </p>
-          )}
+          <p className="text-sm text-muted-foreground text-center">
+            You're logged in as {user.email}. Your message will be associated with your account.
+          </p>
         </form>
       </CardContent>
     </Card>
