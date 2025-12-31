@@ -101,19 +101,41 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
 
       // Check if error is due to duplicate order number
       if (insertedOrderError) {
-        const errorMessage = insertedOrderError.message?.toLowerCase() || ''
-        const isDuplicateKey = (errorMessage.includes('duplicate key') || 
-                               errorMessage.includes('unique constraint')) &&
-                              (errorMessage.includes('orders_order_number_key') ||
-                               errorMessage.includes('order_number'))
+        const errorMessage = (insertedOrderError.message || '').toLowerCase()
+        const errorCode = insertedOrderError.code || ''
+        const errorDetails = JSON.stringify(insertedOrderError).toLowerCase()
+        
+        // Check for duplicate key errors in multiple ways
+        const isDuplicateKey = 
+          // PostgreSQL error codes
+          errorCode === '23505' || // unique_violation
+          // Error message patterns
+          errorMessage.includes('duplicate key') ||
+          errorMessage.includes('unique constraint') ||
+          errorMessage.includes('unique_violation') ||
+          // Constraint name patterns
+          errorMessage.includes('orders_order_number_key') ||
+          errorMessage.includes('order_number') ||
+          errorDetails.includes('orders_order_number_key') ||
+          // Additional patterns
+          errorMessage.includes('already exists')
         
         if (isDuplicateKey && attempt < maxRetries - 1) {
-          console.warn(`Duplicate order number detected (attempt ${attempt + 1}), retrying with new number...`)
+          console.warn(
+            `Duplicate order number detected (attempt ${attempt + 1}/${maxRetries}), ` +
+            `error: ${errorMessage}, retrying with new number...`
+          )
           // Wait a bit before retrying to reduce collision chance (exponential backoff)
           await new Promise(resolve => setTimeout(resolve, 100 * (attempt + 1)))
           continue
         } else {
           orderError = insertedOrderError
+          console.error('Order creation failed:', {
+            error: insertedOrderError,
+            message: errorMessage,
+            code: errorCode,
+            attempt: attempt + 1
+          })
           break
         }
       } else {
