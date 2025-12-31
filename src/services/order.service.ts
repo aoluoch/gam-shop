@@ -54,103 +54,69 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       }
     }
 
-    // Retry logic for order creation with duplicate key handling
-    const maxRetries = 5
+    // Use atomic order creation with built-in retry logic
+    // The database function handles duplicate key violations internally
+    console.log('Creating order atomically with auto-generated order number...')
+    
+    const { data: orderResult, error: orderCreationError } = await supabase
+      .rpc('create_order_with_number', {
+        p_user_id: user.id,
+        p_subtotal: input.subtotal,
+        p_shipping: input.shipping,
+        p_tax: input.tax,
+        p_total: input.total,
+        p_status: 'processing',
+        p_payment_status: 'paid',
+        p_payment_method: input.paymentMethod,
+        p_payment_reference: input.paymentReference,
+        p_notes: input.notes,
+        p_shipping_address: input.shippingAddress,
+      })
+
+    console.log('Atomic order creation result:', orderResult, 'error:', orderCreationError)
+
     let orderData = null
-    let orderError = null
 
-    for (let attempt = 0; attempt < maxRetries; attempt++) {
-      // Generate order number
-      console.log(`Generating order number (attempt ${attempt + 1}/${maxRetries})...`)
-      const { data: orderNumberData, error: orderNumberError } = await supabase
-        .rpc('generate_order_number')
-      console.log('Order number result:', orderNumberData, 'Error:', orderNumberError)
-
-      if (orderNumberError) {
-        console.error('Error generating order number:', orderNumberError)
-        return { success: false, error: 'Failed to generate order number' }
+    if (orderCreationError || !orderResult || orderResult.length === 0) {
+      console.error('Error creating order atomically:', orderCreationError)
+      // Fallback: try using generate_order_number directly with retry logic
+      console.log('Falling back to manual order creation with retry...')
+      const fallbackResult = await createOrderWithRetry(input, user.id)
+      if (!fallbackResult.success || !fallbackResult.order) {
+        return fallbackResult
       }
-
-      const orderNumber = orderNumberData as string
-      console.log('Generated order number:', orderNumber)
-
-      // Create the order with payment_status as 'paid' since payment was already confirmed
-      const orderInsertData = {
-        user_id: user.id,
-        order_number: orderNumber,
-        subtotal: input.subtotal,
-        shipping: input.shipping,
-        tax: input.tax,
-        total: input.total,
-        status: 'processing', // Start as processing since payment is confirmed
-        payment_status: 'paid', // Payment already confirmed via Paystack
-        payment_method: input.paymentMethod,
-        payment_reference: input.paymentReference,
-        notes: input.notes,
-        shipping_address: input.shippingAddress,
-      }
-      console.log('Inserting order with data:', orderInsertData)
-      
-      const { data: insertedOrderData, error: insertedOrderError } = await supabase
+      // Fetch the complete order data for fallback path
+      const { data: fetchedOrder, error: fetchError } = await supabase
         .from('orders')
-        .insert(orderInsertData)
-        .select()
+        .select('*')
+        .eq('id', fallbackResult.order.id)
+        .single()
+      
+      if (fetchError || !fetchedOrder) {
+        console.error('Error fetching fallback order:', fetchError)
+        return { success: false, error: 'Order created but failed to retrieve order data' }
+      }
+      orderData = fetchedOrder
+    } else {
+      const createdOrder = orderResult[0]
+      const orderId = createdOrder.id
+
+      // Fetch the complete order data
+      const { data: fetchedOrder, error: fetchError } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('id', orderId)
         .single()
 
-      console.log('Order insert result - data:', insertedOrderData, 'error:', insertedOrderError)
-
-      // Check if error is due to duplicate order number
-      if (insertedOrderError) {
-        const errorMessage = (insertedOrderError.message || '').toLowerCase()
-        const errorCode = insertedOrderError.code || ''
-        const errorDetails = JSON.stringify(insertedOrderError).toLowerCase()
-        
-        // Check for duplicate key errors in multiple ways
-        const isDuplicateKey = 
-          // PostgreSQL error codes
-          errorCode === '23505' || // unique_violation
-          // Error message patterns
-          errorMessage.includes('duplicate key') ||
-          errorMessage.includes('unique constraint') ||
-          errorMessage.includes('unique_violation') ||
-          // Constraint name patterns
-          errorMessage.includes('orders_order_number_key') ||
-          errorMessage.includes('order_number') ||
-          errorDetails.includes('orders_order_number_key') ||
-          // Additional patterns
-          errorMessage.includes('already exists')
-        
-        if (isDuplicateKey && attempt < maxRetries - 1) {
-          console.warn(
-            `Duplicate order number detected (attempt ${attempt + 1}/${maxRetries}), ` +
-            `error: ${errorMessage}, retrying with new number...`
-          )
-          // Wait a bit before retrying to reduce collision chance (exponential backoff)
-          await new Promise(resolve => setTimeout(resolve, 100 * (attempt + 1)))
-          continue
-        } else {
-          orderError = insertedOrderError
-          console.error('Order creation failed:', {
-            error: insertedOrderError,
-            message: errorMessage,
-            code: errorCode,
-            attempt: attempt + 1
-          })
-          break
-        }
-      } else {
-        orderData = insertedOrderData
-        break
+      if (fetchError || !fetchedOrder) {
+        console.error('Error fetching created order:', fetchError)
+        return { success: false, error: 'Order created but failed to retrieve order data' }
       }
-    }
-
-    if (orderError || !orderData) {
-      console.error('Error creating order after retries:', orderError)
-      return { success: false, error: `Failed to create order: ${orderError?.message || 'Unknown error'}` }
+      orderData = fetchedOrder
     }
 
     // Create order items
-    const orderItems = input.items.map(item => ({
+    const orderItemsData = input.items.map(item => ({
       order_id: orderData.id,
       product_id: item.product.id,
       product_name: item.product.name,
@@ -163,7 +129,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
 
     const { error: itemsError } = await supabase
       .from('order_items')
-      .insert(orderItems)
+      .insert(orderItemsData)
 
     if (itemsError) {
       console.error('Error creating order items:', itemsError)
@@ -267,7 +233,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       id: orderData.id,
       userId: orderData.user_id,
       orderNumber: orderData.order_number,
-      items: orderItems.map((item, index) => ({
+      items: orderItemsData.map((item, index) => ({
         id: `temp-${index}`,
         orderId: orderData.id,
         productId: item.product_id,
@@ -297,6 +263,85 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     console.error('Unexpected error creating order:', error)
     return { success: false, error: 'An unexpected error occurred' }
   }
+}
+
+// Fallback function for manual order creation with retry logic
+async function createOrderWithRetry(input: CreateOrderInput, userId: string): Promise<CreateOrderResult> {
+  const maxRetries = 10
+  let orderData = null
+  let orderError = null
+
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    // Generate order number
+    const { data: orderNumberData, error: orderNumberError } = await supabase
+      .rpc('generate_order_number')
+
+    if (orderNumberError) {
+      console.error('Error generating order number:', orderNumberError)
+      return { success: false, error: 'Failed to generate order number' }
+    }
+
+    const orderNumber = orderNumberData as string
+
+    // Try to create the order
+    const { data: insertedOrderData, error: insertedOrderError } = await supabase
+      .from('orders')
+      .insert({
+        user_id: userId,
+        order_number: orderNumber,
+        subtotal: input.subtotal,
+        shipping: input.shipping,
+        tax: input.tax,
+        total: input.total,
+        status: 'processing',
+        payment_status: 'paid',
+        payment_method: input.paymentMethod,
+        payment_reference: input.paymentReference,
+        notes: input.notes,
+        shipping_address: input.shippingAddress,
+      })
+      .select()
+      .single()
+
+    if (insertedOrderError) {
+      const errorMessage = (insertedOrderError.message || '').toLowerCase()
+      const errorCode = insertedOrderError.code || ''
+      const isDuplicateKey = 
+        errorCode === '23505' ||
+        errorMessage.includes('duplicate key') ||
+        errorMessage.includes('unique constraint') ||
+        errorMessage.includes('orders_order_number_key')
+
+      if (isDuplicateKey && attempt < maxRetries - 1) {
+        console.warn(`Duplicate detected (attempt ${attempt + 1}), retrying...`)
+        await new Promise(resolve => setTimeout(resolve, 50 * (attempt + 1)))
+        continue
+      } else {
+        orderError = insertedOrderError
+        break
+      }
+    } else {
+      orderData = insertedOrderData
+      break
+    }
+  }
+
+  if (orderError || !orderData) {
+    return { success: false, error: `Failed to create order: ${orderError?.message || 'Unknown error'}` }
+  }
+
+  // Fetch complete order data
+  const { data: completeOrder, error: fetchError } = await supabase
+    .from('orders')
+    .select('*')
+    .eq('id', orderData.id)
+    .single()
+
+  if (fetchError || !completeOrder) {
+    return { success: false, error: 'Order created but failed to retrieve order data' }
+  }
+
+  return { success: true, order: mapOrder({ ...completeOrder, order_items: [] }) }
 }
 
 export async function getOrderByReference(reference: string): Promise<Order | null> {
