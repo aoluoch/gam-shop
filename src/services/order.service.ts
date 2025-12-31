@@ -43,48 +43,88 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       return { success: false, error: 'User not authenticated' }
     }
 
-    // Generate order number
-    console.log('Generating order number...')
-    const { data: orderNumberData, error: orderNumberError } = await supabase
-      .rpc('generate_order_number')
-    console.log('Order number result:', orderNumberData, 'Error:', orderNumberError)
-
-    if (orderNumberError) {
-      console.error('Error generating order number:', orderNumberError)
-      return { success: false, error: 'Failed to generate order number' }
+    // Check if order with this payment reference already exists (idempotent operation)
+    // This prevents duplicate orders if payment callback is called multiple times
+    if (input.paymentReference) {
+      console.log('Checking for existing order with payment reference:', input.paymentReference)
+      const existingOrder = await getOrderByReference(input.paymentReference)
+      if (existingOrder) {
+        console.log('Order already exists with this payment reference, returning existing order')
+        return { success: true, order: existingOrder }
+      }
     }
 
-    const orderNumber = orderNumberData as string
-    console.log('Generated order number:', orderNumber)
+    // Retry logic for order creation with duplicate key handling
+    const maxRetries = 5
+    let orderData = null
+    let orderError = null
 
-    // Create the order with payment_status as 'paid' since payment was already confirmed
-    const orderInsertData = {
-      user_id: user.id,
-      order_number: orderNumber,
-      subtotal: input.subtotal,
-      shipping: input.shipping,
-      tax: input.tax,
-      total: input.total,
-      status: 'processing', // Start as processing since payment is confirmed
-      payment_status: 'paid', // Payment already confirmed via Paystack
-      payment_method: input.paymentMethod,
-      payment_reference: input.paymentReference,
-      notes: input.notes,
-      shipping_address: input.shippingAddress,
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      // Generate order number
+      console.log(`Generating order number (attempt ${attempt + 1}/${maxRetries})...`)
+      const { data: orderNumberData, error: orderNumberError } = await supabase
+        .rpc('generate_order_number')
+      console.log('Order number result:', orderNumberData, 'Error:', orderNumberError)
+
+      if (orderNumberError) {
+        console.error('Error generating order number:', orderNumberError)
+        return { success: false, error: 'Failed to generate order number' }
+      }
+
+      const orderNumber = orderNumberData as string
+      console.log('Generated order number:', orderNumber)
+
+      // Create the order with payment_status as 'paid' since payment was already confirmed
+      const orderInsertData = {
+        user_id: user.id,
+        order_number: orderNumber,
+        subtotal: input.subtotal,
+        shipping: input.shipping,
+        tax: input.tax,
+        total: input.total,
+        status: 'processing', // Start as processing since payment is confirmed
+        payment_status: 'paid', // Payment already confirmed via Paystack
+        payment_method: input.paymentMethod,
+        payment_reference: input.paymentReference,
+        notes: input.notes,
+        shipping_address: input.shippingAddress,
+      }
+      console.log('Inserting order with data:', orderInsertData)
+      
+      const { data: insertedOrderData, error: insertedOrderError } = await supabase
+        .from('orders')
+        .insert(orderInsertData)
+        .select()
+        .single()
+
+      console.log('Order insert result - data:', insertedOrderData, 'error:', insertedOrderError)
+
+      // Check if error is due to duplicate order number
+      if (insertedOrderError) {
+        const errorMessage = insertedOrderError.message?.toLowerCase() || ''
+        const isDuplicateKey = (errorMessage.includes('duplicate key') || 
+                               errorMessage.includes('unique constraint')) &&
+                              (errorMessage.includes('orders_order_number_key') ||
+                               errorMessage.includes('order_number'))
+        
+        if (isDuplicateKey && attempt < maxRetries - 1) {
+          console.warn(`Duplicate order number detected (attempt ${attempt + 1}), retrying with new number...`)
+          // Wait a bit before retrying to reduce collision chance (exponential backoff)
+          await new Promise(resolve => setTimeout(resolve, 100 * (attempt + 1)))
+          continue
+        } else {
+          orderError = insertedOrderError
+          break
+        }
+      } else {
+        orderData = insertedOrderData
+        break
+      }
     }
-    console.log('Inserting order with data:', orderInsertData)
-    
-    const { data: orderData, error: orderError } = await supabase
-      .from('orders')
-      .insert(orderInsertData)
-      .select()
-      .single()
 
-    console.log('Order insert result - data:', orderData, 'error:', orderError)
-
-    if (orderError) {
-      console.error('Error creating order:', orderError)
-      return { success: false, error: `Failed to create order: ${orderError.message}` }
+    if (orderError || !orderData) {
+      console.error('Error creating order after retries:', orderError)
+      return { success: false, error: `Failed to create order: ${orderError?.message || 'Unknown error'}` }
     }
 
     // Create order items
