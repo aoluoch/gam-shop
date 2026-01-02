@@ -6,7 +6,7 @@ import { supabase } from '@/services/supabase'
 
 const CART_STORAGE_KEY = 'gam-shop-cart'
 // Default values (fallback if settings can't be loaded)
-const DEFAULT_SHIPPING_THRESHOLD = 5000 // Free shipping over KES 5000
+const DEFAULT_SHIPPING_THRESHOLD = 10000 // Free shipping over KES 5000
 const DEFAULT_SHIPPING_COST = 300 // KES (standard shipping rate)
 const DEFAULT_TAX_RATE = 0.16 // 16% VAT
 
