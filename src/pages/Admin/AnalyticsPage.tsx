@@ -144,7 +144,7 @@ export function AnalyticsPage() {
               <CardTitle>Revenue Over Time</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-[400px]">
+              <div className="h-100">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={data.revenueOverTime}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
@@ -181,7 +181,7 @@ export function AnalyticsPage() {
               <CardTitle>Orders Over Time</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-[400px]">
+              <div className="h-100">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={data.ordersOverTime}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
@@ -210,7 +210,7 @@ export function AnalyticsPage() {
               <CardTitle>Sales by Category</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-[400px] flex items-center justify-center">
+              <div className="h-100 flex items-center justify-center">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie

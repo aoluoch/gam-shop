@@ -400,7 +400,7 @@ export function ProductPage() {
                   key={index}
                   onClick={() => setSelectedImageIndex(index)}
                   className={cn(
-                    'flex-shrink-0 w-20 h-20 rounded-md overflow-hidden border-2 transition-colors',
+                    'shrink-0 w-20 h-20 rounded-md overflow-hidden border-2 transition-colors',
                     selectedImageIndex === index
                       ? 'border-primary'
                       : 'border-transparent hover:border-muted-foreground/50'
@@ -578,7 +578,7 @@ export function ProductPage() {
                 >
                   -
                 </button>
-                <span className="px-4 py-2 border-x min-w-[60px] text-center">
+                <span className="px-4 py-2 border-x min-w-15 text-center">
                   {quantity}
                 </span>
                 <button

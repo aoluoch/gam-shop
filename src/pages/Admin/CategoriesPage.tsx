@@ -1,10 +1,11 @@
-import { useState } from 'react'
-import { Plus, Edit2, Trash2, FolderTree } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { Plus, Edit2, Trash2, FolderTree, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { useToast } from '@/hooks/useToast'
+import { supabase } from '@/services/supabase'
 
 interface Category {
   id: string
@@ -14,18 +15,60 @@ interface Category {
   productCount: number
 }
 
-const INITIAL_CATEGORIES: Category[] = [
-  { id: '1', name: 'Books', slug: 'books', description: 'Spiritual books and publications', productCount: 0 },
-  { id: '2', name: 'Apparel', slug: 'apparel', description: 'T-shirts and clothing items', productCount: 0 },
-  { id: '3', name: 'Accessories', slug: 'accessories', description: 'Caps, rubber bands and more', productCount: 0 },
+const DEFAULT_CATEGORIES: Omit<Category, 'productCount'>[] = [
+  { id: '1', name: 'Books', slug: 'books', description: 'Spiritual books and publications' },
+  { id: '2', name: 'Apparel', slug: 'apparel', description: 'T-shirts and clothing items' },
+  { id: '3', name: 'Accessories', slug: 'accessories', description: 'Caps, rubber bands and more' },
 ]
 
 export function CategoriesPage() {
   const { success, error: showError } = useToast()
-  const [categories, setCategories] = useState<Category[]>(INITIAL_CATEGORIES)
+  const [categories, setCategories] = useState<Category[]>([])
+  const [loading, setLoading] = useState(true)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [formData, setFormData] = useState({ name: '', slug: '', description: '' })
+
+  const loadCategoryCounts = useCallback(async () => {
+    setLoading(true)
+    try {
+      // Fetch product counts grouped by category
+      const { data, error } = await supabase
+        .from('products')
+        .select('category')
+        .eq('is_active', true)
+
+      if (error) {
+        console.error('Error fetching product counts:', error)
+        showError('Failed to load category counts')
+        return
+      }
+
+      // Count products per category
+      const counts: Record<string, number> = {}
+      data?.forEach((product) => {
+        const cat = product.category?.toLowerCase() || 'unknown'
+        counts[cat] = (counts[cat] || 0) + 1
+      })
+
+      // Map default categories with actual counts
+      const categoriesWithCounts: Category[] = DEFAULT_CATEGORIES.map((cat) => ({
+        ...cat,
+        productCount: counts[cat.slug] || 0,
+      }))
+
+      setCategories(categoriesWithCounts)
+    } catch (error) {
+      console.error('Error loading categories:', error)
+      showError('Failed to load categories')
+    } finally {
+      setLoading(false)
+    }
+  }, [showError])
+
+  useEffect(() => {
+    loadCategoryCounts()
+  }, [loadCategoryCounts])
 
   function handleEdit(category: Category) {
     setEditingId(category.id)
@@ -86,6 +129,14 @@ export function CategoriesPage() {
     setShowForm(false)
     setEditingId(null)
     setFormData({ name: '', slug: '', description: '' })
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
   }
 
   return (
@@ -185,7 +236,11 @@ export function CategoriesPage() {
                       <td className="py-3 px-4 font-medium">{category.name}</td>
                       <td className="py-3 px-4 text-muted-foreground font-mono text-sm">{category.slug}</td>
                       <td className="py-3 px-4 text-muted-foreground">{category.description || '—'}</td>
-                      <td className="py-3 px-4 text-right">{category.productCount}</td>
+                      <td className="py-3 px-4 text-right">
+                        <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-primary/10 text-primary">
+                          {category.productCount}
+                        </span>
+                      </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center justify-end gap-1">
                           <Button
