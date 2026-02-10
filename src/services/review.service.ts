@@ -114,7 +114,7 @@ export async function getUserReviewForProduct(productId: string, userId: string)
     .select('*')
     .eq('product_id', productId)
     .eq('user_id', userId)
-    .single()
+    .maybeSingle()
 
   if (error || !data) {
     return null

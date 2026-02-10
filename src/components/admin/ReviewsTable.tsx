@@ -125,7 +125,7 @@ export function ReviewsTable({
                         <Package className="h-5 w-5 text-muted-foreground" />
                       </div>
                     )}
-                    <span className="font-medium line-clamp-1 max-w-[150px]">
+                    <span className="font-medium line-clamp-1 max-w-37.5">
                       {review.productName}
                     </span>
                   </div>
@@ -145,7 +145,7 @@ export function ReviewsTable({
                   <StarRating rating={review.rating} />
                 </TableCell>
                 <TableCell>
-                  <span className="line-clamp-1 max-w-[200px]">
+                  <span className="line-clamp-1 max-w-50">
                     {review.title || review.comment || 'No content'}
                   </span>
                 </TableCell>
