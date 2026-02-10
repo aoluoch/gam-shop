@@ -18,10 +18,23 @@ export interface DashboardStats {
 
 export async function getDashboardStats(): Promise<DashboardStats> {
   const [ordersResult, customersResult, productsResult, lowStockResult] = await Promise.all([
-    supabase.from('orders').select('*').order('created_at', { ascending: false }),
-    supabase.from('profiles').select('id').eq('role', 'customer'),
-    supabase.from('products').select('*').eq('is_active', true),
-    supabase.from('products').select('*').lt('stock', 10).eq('is_active', true),
+    supabase
+      .from('orders')
+      .select('id, total, payment_status, status, created_at, order_number')
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('profiles')
+      .select('id', { count: 'exact', head: true })
+      .eq('role', 'customer'),
+    supabase
+      .from('products')
+      .select('id', { count: 'exact', head: true })
+      .eq('is_active', true),
+    supabase
+      .from('products')
+      .select('id, name, stock, thumbnail')
+      .lt('stock', 10)
+      .eq('is_active', true),
   ])
 
   const orders = ordersResult.data || []

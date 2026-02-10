@@ -85,7 +85,7 @@ export async function deleteContactMessage(
 export async function getUnreadCount(): Promise<number> {
   const { count, error } = await supabase
     .from('contact_messages')
-    .select('*', { count: 'exact', head: true })
+    .select('id', { count: 'exact', head: true }) // Select minimal field
     .eq('status', 'unread')
 
   if (error) {

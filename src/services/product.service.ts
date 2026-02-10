@@ -4,7 +4,18 @@ import type { Product } from '@/types/product'
 export async function getProducts(): Promise<Product[]> {
   const { data, error } = await supabase
     .from('products')
-    .select('*')
+    .select(`
+      *,
+      product_variants!left (
+        id,
+        size,
+        color,
+        stock,
+        sku_suffix,
+        price_adjustment,
+        is_active
+      )
+    `)
     .eq('is_active', true)
     .order('created_at', { ascending: false })
 
@@ -13,18 +24,33 @@ export async function getProducts(): Promise<Product[]> {
     return []
   }
 
-  const products = data.map(mapProduct)
-  
-  // Check which products have variants
-  await enrichProductsWithVariants(products)
-  
-  return products
+  return data.map(item => {
+    const product = mapProduct(item)
+    if (item.product_variants && item.product_variants.length > 0) {
+      product.hasVariants = true
+      product.variants = item.product_variants
+        .filter((v: { is_active: boolean }) => v.is_active)
+        .map(mapVariant)
+    }
+    return product
+  })
 }
 
 export async function getFeaturedProducts(): Promise<Product[]> {
   const { data, error } = await supabase
     .from('products')
-    .select('*')
+    .select(`
+      *,
+      product_variants!left (
+        id,
+        size,
+        color,
+        stock,
+        sku_suffix,
+        price_adjustment,
+        is_active
+      )
+    `)
     .eq('is_active', true)
     .eq('featured', true)
     .order('created_at', { ascending: false })
@@ -46,7 +72,18 @@ export async function getFeaturedProducts(): Promise<Product[]> {
 export async function getProductsByCategory(category: string): Promise<Product[]> {
   const { data, error } = await supabase
     .from('products')
-    .select('*')
+    .select(`
+      *,
+      product_variants!left (
+        id,
+        size,
+        color,
+        stock,
+        sku_suffix,
+        price_adjustment,
+        is_active
+      )
+    `)
     .eq('is_active', true)
     .eq('category', category)
     .order('created_at', { ascending: false })
@@ -67,7 +104,18 @@ export async function getProductsByCategory(category: string): Promise<Product[]
 export async function getProductById(id: string): Promise<Product | null> {
   const { data, error } = await supabase
     .from('products')
-    .select('*')
+    .select(`
+      *,
+      product_variants!left (
+        id,
+        size,
+        color,
+        stock,
+        sku_suffix,
+        price_adjustment,
+        is_active
+      )
+    `)
     .eq('id', id)
     .eq('is_active', true)
     .single()

@@ -24,51 +24,68 @@ export async function getAnalyticsData(period: '7d' | '30d' | '90d' | '1y'): Pro
   const now = new Date()
   let startDate: Date
   let previousStartDate: Date
-  let previousEndDate: Date
 
   switch (period) {
     case '7d':
       startDate = subDays(now, 7)
       previousStartDate = subDays(now, 14)
-      previousEndDate = subDays(now, 7)
       break
     case '30d':
       startDate = subDays(now, 30)
       previousStartDate = subDays(now, 60)
-      previousEndDate = subDays(now, 30)
       break
     case '90d':
       startDate = subDays(now, 90)
       previousStartDate = subDays(now, 180)
-      previousEndDate = subDays(now, 90)
       break
     case '1y':
       startDate = subMonths(now, 12)
       previousStartDate = subMonths(now, 24)
-      previousEndDate = subMonths(now, 12)
       break
   }
 
-  // Fetch current period orders
-  const { data: currentOrders } = await supabase
+  // Query for current period orders
+  const { data: ordersWithDetails } = await supabase
     .from('orders')
     .select(`
-      *,
-      order_items (*)
+      id,
+      total,
+      created_at,
+      order_items (
+        product_id,
+        price,
+        quantity,
+        product_name
+      )
     `)
     .gte('created_at', startDate.toISOString())
     .eq('payment_status', 'paid')
 
-  // Fetch previous period orders for comparison
-  const { data: previousOrders } = await supabase
+  // Query for previous period orders (for comparison)
+  const { data: prevOrdersData } = await supabase
     .from('orders')
-    .select('total')
+    .select('id, total')
     .gte('created_at', previousStartDate.toISOString())
-    .lt('created_at', previousEndDate.toISOString())
+    .lt('created_at', startDate.toISOString())
     .eq('payment_status', 'paid')
 
-  const orders = currentOrders || []
-  const prevOrders = previousOrders || []
+  // Fetch product categories in one query for all unique product IDs
+  const productIds = new Set<string>()
+  ordersWithDetails?.forEach(order => {
+    order.order_items?.forEach((item: { product_id: string }) => {
+      productIds.add(item.product_id)
+    })
+  })
+
+  const { data: productData } = await supabase
+    .from('products')
+    .select('id, category, name, thumbnail')
+    .in('id', Array.from(productIds))
+
+  const productMap = new Map(productData?.map(p => [p.id, p]) || [])
+
+  const orders = ordersWithDetails || []
+  const prevOrders = prevOrdersData || []
 
   // Calculate totals
   const totalRevenue = orders.reduce((sum, o) => sum + Number(o.total), 0)
@@ -135,29 +152,13 @@ export async function getAnalyticsData(period: '7d' | '30d' | '90d' | '1y'): Pro
     }
   })
 
-  // Sales by category
-  const categoryTotals: Record<string, number> = {}
-  orders.forEach(order => {
-    const items = order.order_items as Array<{ product_id: string; price: number; quantity: number }>
-    items.forEach(item => {
-      // We'll use a simple approach here - in production you'd want to join with products
-      categoryTotals['Products'] = (categoryTotals['Products'] || 0) + Number(item.price) * item.quantity
-    })
-  })
-
-  // Fetch products to get categories
-  const { data: products } = await supabase
-    .from('products')
-    .select('id, category')
-
-  const productCategories = new Map(products?.map(p => [p.id, p.category]) || [])
-
   // Recalculate with actual categories
   const actualCategoryTotals: Record<string, number> = {}
   orders.forEach(order => {
     const items = order.order_items as Array<{ product_id: string; price: number; quantity: number }>
     items.forEach(item => {
-      const category = productCategories.get(item.product_id) || 'Other'
+      const product = productMap.get(item.product_id)
+      const category = product?.category || 'Other'
       const capitalizedCategory = category.charAt(0).toUpperCase() + category.slice(1)
       actualCategoryTotals[capitalizedCategory] = (actualCategoryTotals[capitalizedCategory] || 0) + Number(item.price) * item.quantity
     })
@@ -180,15 +181,6 @@ export async function getAnalyticsData(period: '7d' | '30d' | '90d' | '1y'): Pro
       productSales[item.product_id].revenue += Number(item.price) * item.quantity
     })
   })
-
-  // Get product details
-  const productIds = Object.keys(productSales)
-  const { data: productDetails } = await supabase
-    .from('products')
-    .select('id, name, thumbnail')
-    .in('id', productIds)
-
-  const productMap = new Map(productDetails?.map(p => [p.id, p]) || [])
 
   const topProducts = Object.entries(productSales)
     .map(([id, stats]) => {
