@@ -5,7 +5,7 @@ import { ROUTES } from '@/constants/routes'
 
 export function HeroSection() {
   return (
-    <section className="relative bg-gradient-to-br from-primary/10 via-background to-secondary/10 py-12 md:py-16 lg:py-24">
+    <section className="relative bg-linear-to-br from-primary/10 via-background to-secondary/10 py-12 md:py-16 lg:py-24">
       <div className="container mx-auto px-4">
         <div className="grid lg:grid-cols-2 gap-8 md:gap-12 items-center">
           <div className="space-y-4 md:space-y-6">
@@ -14,8 +14,7 @@ export function HeroSection() {
               <span className="text-primary">Journey</span>
             </h1>
             <p className="text-lg text-muted-foreground max-w-xl">
-              Discover inspiring books by Apostle David Owusu and Rev. Eunice, 
-              quality apparel, and accessories that reflect your faith.
+              Discover inspiring books by Apostle David Owusu and Rev. Dr. Eunice Owusu, quality apparel, and accessories that reflect your Christian faith.
             </p>
             <div className="flex flex-wrap gap-4">
               <Button asChild size="lg">

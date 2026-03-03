@@ -33,7 +33,7 @@ export function AboutPage() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-primary/10 via-background to-primary/5 py-12 md:py-16 lg:py-24">
+      <section className="bg-linear-to-br from-primary/10 via-background to-primary/5 py-12 md:py-16 lg:py-24">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
             <div className="flex justify-center mb-4 md:mb-6">
@@ -94,7 +94,7 @@ export function AboutPage() {
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-foreground mb-4">Our Values</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              These core values guide everything we do and shape how we serve our community.
+              At Grace Arena Ministries, we are one big family — connected by Love, Word, Prayer, Service, Excellence, and Discipleship.
             </p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
