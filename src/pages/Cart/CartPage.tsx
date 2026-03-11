@@ -91,7 +91,6 @@ export function CartPage() {
               </div>
               <div className="text-xs text-muted-foreground text-center space-y-1">
                 <p>🔒 Secure checkout powered by Paystack</p>
-                <p>Free shipping on orders over KES 5,000</p>
               </div>
             </CardContent>
           </Card>
