@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Loader2, Lock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useCart } from '@/hooks/useCart'
@@ -33,8 +33,22 @@ interface PaystackConfig {
 }
 
 export function PaystackButton({ email, shippingData, onSuccess, onError, className }: PaystackButtonProps) {
-  const { items, subtotal, shipping, tax, total } = useCart()
+  const { items, subtotal, tax, calculateShippingWithCity } = useCart()
   const [loading, setLoading] = useState(false)
+
+  // Calculate shipping fee based on city using rates from database
+  const shipping = useMemo(() => {
+    if (!shippingData.city.trim()) {
+      // Fallback to default if no city provided
+      return 300
+    }
+    return calculateShippingWithCity(shippingData.city)
+  }, [shippingData.city, calculateShippingWithCity])
+
+  // Calculate total with location-based shipping
+  const total = useMemo(() => {
+    return subtotal + shipping + tax
+  }, [subtotal, shipping, tax])
 
   const publicKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY
 
@@ -117,6 +131,10 @@ export function PaystackButton({ email, shippingData, onSuccess, onError, classN
         return
       }
 
+      // Calculate final shipping fee based on city (recalculate to ensure accuracy)
+      const finalShipping = calculateShippingWithCity(shippingData.city)
+      const finalTotal = subtotal + finalShipping + tax
+
       // Create order only after payment is verified
       const orderInput: CreateOrderInput = {
         items,
@@ -132,9 +150,9 @@ export function PaystackButton({ email, shippingData, onSuccess, onError, classN
           country: shippingData.country,
         },
         subtotal,
-        shipping,
+        shipping: finalShipping,
         tax,
-        total,
+        total: finalTotal,
         paymentMethod: 'paystack',
         paymentReference: reference,
       }

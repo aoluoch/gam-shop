@@ -25,6 +25,9 @@ export interface CartContextType {
   tax: number
   total: number
   freeShippingThreshold: number
+  shippingCity: string | null
+  setShippingCity: (city: string | null) => void
+  calculateShippingWithCity: (city: string) => number
   addItem: (product: Product, quantity?: number, options?: { size?: string; color?: string }) => void
   removeItem: (itemId: string) => void
   updateQuantity: (itemId: string, quantity: number) => void

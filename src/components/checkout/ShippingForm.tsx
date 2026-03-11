@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { MapPin, User, Phone, Building2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAuth } from '@/hooks/useAuth'
+import { useCart } from '@/hooks/useCart'
 
 export interface ShippingData {
   fullName: string
@@ -26,7 +27,25 @@ interface ShippingFormProps {
 
 export function ShippingForm({ data, onChange, onNext }: ShippingFormProps) {
   const { user } = useAuth()
+  const { setShippingCity, calculateShippingWithCity } = useCart()
   const [errors, setErrors] = useState<Partial<Record<keyof ShippingData, string>>>({})
+
+  // Calculate estimated shipping fee based on city using rates from database
+  const estimatedShipping = useMemo(() => {
+    if (!data.city.trim()) {
+      return null
+    }
+    return calculateShippingWithCity(data.city)
+  }, [data.city, calculateShippingWithCity])
+
+  // Update cart context when city changes
+  useEffect(() => {
+    if (data.city.trim()) {
+      setShippingCity(data.city)
+    } else {
+      setShippingCity(null)
+    }
+  }, [data.city, setShippingCity])
 
   useEffect(() => {
     if (user?.email && !data.email) {
@@ -145,7 +164,7 @@ export function ShippingForm({ data, onChange, onNext }: ShippingFormProps) {
 
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-2">
-              <Label htmlFor="city">City *</Label>
+              <Label htmlFor="city">City / County*</Label>
               <Input
                 id="city"
                 placeholder="Nairobi"
@@ -154,6 +173,11 @@ export function ShippingForm({ data, onChange, onNext }: ShippingFormProps) {
                 className={errors.city ? 'border-destructive' : ''}
               />
               {errors.city && <p className="text-xs text-destructive">{errors.city}</p>}
+              {estimatedShipping !== null && data.city.trim() && (
+                <p className="text-xs text-muted-foreground">
+                  Estimated delivery fee: {estimatedShipping === 0 ? 'Free' : `KES ${estimatedShipping.toLocaleString()}`}
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="state">State / County</Label>

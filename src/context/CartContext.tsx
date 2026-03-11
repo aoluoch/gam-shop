@@ -3,6 +3,7 @@ import type { CartItem } from '@/types/cart'
 import type { Product } from '@/types/product'
 import { CartContext } from './CartContextDef'
 import { supabase } from '@/services/supabase'
+import { calculateShippingFee } from '@/utils/shipping'
 
 const CART_STORAGE_KEY = 'gam-shop-cart'
 // Default values (fallback if settings can't be loaded)
@@ -12,7 +13,8 @@ const DEFAULT_TAX_RATE = 0.16 // 16% VAT
 
 interface StoreSettings {
   freeShippingThreshold: number
-  standardShippingRate: number
+  standardShippingRate: number // Nairobi area shipping rate
+  expressShippingRate: number // Other area shipping rate
   taxRate: number
 }
 
@@ -32,9 +34,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const [storeSettings, setStoreSettings] = useState<StoreSettings>({
     freeShippingThreshold: DEFAULT_SHIPPING_THRESHOLD,
-    standardShippingRate: DEFAULT_SHIPPING_COST,
+    standardShippingRate: DEFAULT_SHIPPING_COST, // Nairobi area fee
+    expressShippingRate: 500, // Other area fee (default)
     taxRate: DEFAULT_TAX_RATE,
   })
+
+  const [shippingCity, setShippingCity] = useState<string | null>(null)
 
   // Load store settings from database on mount
   useEffect(() => {
@@ -59,6 +64,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
             standardShippingRate: settings.standard_shipping_rate != null 
               ? Number(settings.standard_shipping_rate) 
               : DEFAULT_SHIPPING_COST,
+            expressShippingRate: settings.express_shipping_rate != null 
+              ? Number(settings.express_shipping_rate) 
+              : 500,
             taxRate: isNaN(taxRateValue) ? DEFAULT_TAX_RATE : taxRateValue,
           })
         }
@@ -90,8 +98,31 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const shipping = useMemo(() => {
     if (items.length === 0) return 0
+    
+    // Use location-based shipping if city is provided
+    if (shippingCity) {
+      return calculateShippingFee(
+        shippingCity, 
+        subtotal, 
+        storeSettings.freeShippingThreshold,
+        storeSettings.standardShippingRate, // Nairobi area fee
+        storeSettings.expressShippingRate   // Other area fee
+      )
+    }
+    
+    // Fallback to standard rate if no city is set
     return subtotal >= storeSettings.freeShippingThreshold ? 0 : storeSettings.standardShippingRate
-  }, [subtotal, items.length, storeSettings.freeShippingThreshold, storeSettings.standardShippingRate])
+  }, [subtotal, items.length, storeSettings.freeShippingThreshold, storeSettings.standardShippingRate, storeSettings.expressShippingRate, shippingCity])
+
+  const calculateShippingWithCity = useCallback((city: string) => {
+    return calculateShippingFee(
+      city, 
+      subtotal, 
+      storeSettings.freeShippingThreshold,
+      storeSettings.standardShippingRate, // Nairobi area fee
+      storeSettings.expressShippingRate   // Other area fee
+    )
+  }, [subtotal, storeSettings.freeShippingThreshold, storeSettings.standardShippingRate, storeSettings.expressShippingRate])
 
   const tax = useMemo(() => {
     return Math.round(subtotal * storeSettings.taxRate)
@@ -175,6 +206,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
         tax,
         total,
         freeShippingThreshold: storeSettings.freeShippingThreshold,
+        shippingCity,
+        setShippingCity,
+        calculateShippingWithCity,
         addItem,
         removeItem,
         updateQuantity,

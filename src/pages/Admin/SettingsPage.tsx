@@ -313,7 +313,7 @@ export function SettingsPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="standardShippingRate">Standard Shipping (KSh)</Label>
+                  <Label htmlFor="standardShippingRate">Nairobi Area Shipping (KSh)</Label>
                   <Input
                     id="standardShippingRate"
                     type="number"
@@ -327,10 +327,13 @@ export function SettingsPage() {
                       })
                     }
                   />
+                  <p className="text-xs text-muted-foreground">
+                    For Nairobi, Kiambu, and Kajiado
+                  </p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="expressShippingRate">Express Shipping (KSh)</Label>
+                  <Label htmlFor="expressShippingRate">Other Areas Shipping (KSh)</Label>
                   <Input
                     id="expressShippingRate"
                     type="number"
@@ -344,6 +347,9 @@ export function SettingsPage() {
                       })
                     }
                   />
+                  <p className="text-xs text-muted-foreground">
+                    For all other locations in Kenya
+                  </p>
                 </div>
               </div>
 
