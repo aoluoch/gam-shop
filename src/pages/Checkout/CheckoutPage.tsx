@@ -23,16 +23,16 @@ export function CheckoutPage() {
 
   if (items.length === 0) {
     return (
-      <div className="container mx-auto px-4 py-12">
+      <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-10">
         <div className="max-w-2xl mx-auto text-center">
-          <ShoppingBag className="h-24 w-24 text-muted-foreground/30 mx-auto mb-6" />
-          <h1 className="text-3xl font-bold text-foreground mb-4">Your cart is empty</h1>
-          <p className="text-muted-foreground mb-8">
+          <ShoppingBag className="h-16 w-16 sm:h-24 sm:w-24 text-muted-foreground/30 mx-auto mb-4 sm:mb-6" />
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-3 sm:mb-4">Your cart is empty</h1>
+          <p className="text-sm sm:text-base text-muted-foreground mb-6 sm:mb-8 px-2 sm:px-4">
             Add some items to your cart before checking out.
           </p>
-          <Button asChild size="lg">
+          <Button asChild size="lg" className="w-full sm:w-auto">
             <Link to={ROUTES.SHOP}>
-              <ShoppingBag className="mr-2 h-5 w-5" />
+              <ShoppingBag className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
               Start Shopping
             </Link>
           </Button>
@@ -42,34 +42,35 @@ export function CheckoutPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-4 md:py-8">
-      <div className="flex items-center gap-2 sm:gap-4 mb-6 md:mb-8">
-        <Button variant="ghost" size="icon" asChild>
+    <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8">
+      <div className="flex items-start gap-2 sm:gap-4 mb-4 sm:mb-6 lg:mb-8">
+        <Button variant="ghost" size="icon" className="shrink-0" asChild>
           <Link to={ROUTES.CART}>
-            <ArrowLeft className="h-5 w-5" />
+            <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
           </Link>
         </Button>
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Checkout</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">Complete your order</p>
+
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">Checkout</h1>
+          <p className="text-xs sm:text-sm lg:text-base text-muted-foreground">Complete your order</p>
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6 md:gap-8">
-        <div className="lg:col-span-2">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+        <div className="lg:col-span-2 min-w-0 order-2 lg:order-1">
           <CheckoutForm onSuccess={handlePaymentSuccess} />
         </div>
 
-        <div className="lg:col-span-1">
-          <div className="sticky top-4 space-y-4">
+        <div className="lg:col-span-1 min-w-0 order-1 lg:order-2">
+          <div className="space-y-3 sm:space-y-4 lg:sticky lg:top-4">
             <OrderSummary />
-            
-            <div className="bg-muted/50 rounded-lg p-4 space-y-3">
-              <div className="flex items-center gap-2 text-sm">
-                <ShieldCheck className="h-4 w-4 text-green-600" />
+
+            <div className="bg-muted/50 rounded-lg p-3 sm:p-4 space-y-2 sm:space-y-3">
+              <div className="flex items-center gap-2 text-xs sm:text-sm">
+                <ShieldCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-green-600 shrink-0" />
                 <span className="font-medium">Secure Checkout</span>
               </div>
-              <ul className="text-xs text-muted-foreground space-y-1">
+              <ul className="text-[10px] sm:text-xs text-muted-foreground space-y-0.5 sm:space-y-1">
                 <li>• 256-bit SSL encryption</li>
                 <li>• Secure payment processing</li>
                 <li>• Your data is protected</li>
