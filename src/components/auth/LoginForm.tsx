@@ -15,20 +15,74 @@ export function LoginForm() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>({})
   const { signIn } = useAuth()
   const { error: showError, success } = useToast()
   const navigate = useNavigate()
 
+  const validateEmail = (emailValue: string): string | null => {
+    const trimmed = emailValue.trim()
+    if (!trimmed) {
+      return 'Email is required'
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(trimmed)) {
+      return 'Please enter a valid email address'
+    }
+    return null
+  }
+
+  const validatePassword = (passwordValue: string): string | null => {
+    const trimmed = passwordValue.trim()
+    if (!trimmed) {
+      return 'Password is required'
+    }
+    if (trimmed.length < 1) {
+      return 'Password cannot be empty'
+    }
+    return null
+  }
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setEmail(value)
+    if (errors.email) {
+      const error = validateEmail(value)
+      setErrors(prev => ({ ...prev, email: error || undefined }))
+    }
+  }
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setPassword(value)
+    if (errors.password) {
+      const error = validatePassword(value)
+      setErrors(prev => ({ ...prev, password: error || undefined }))
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!email || !password) {
-      showError('Please enter your email and password to sign in', 'Missing Credentials')
+    // Trim and validate all fields
+    const trimmedEmail = email.trim()
+    const trimmedPassword = password.trim()
+
+    const emailError = validateEmail(trimmedEmail)
+    const passwordError = validatePassword(trimmedPassword)
+
+    const newErrors: { email?: string; password?: string } = {}
+    if (emailError) newErrors.email = emailError
+    if (passwordError) newErrors.password = passwordError
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors)
+      showError('Please correct the errors in the form before submitting', 'Validation Error')
       return
     }
 
     setLoading(true)
-    const { error } = await signIn(email, password)
+    const { error } = await signIn(trimmedEmail, trimmedPassword)
     setLoading(false)
 
     if (error) {
@@ -64,11 +118,19 @@ export function LoginForm() {
                 type="email"
                 placeholder="you@example.com"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="pl-10"
+                onChange={handleEmailChange}
+                onBlur={() => {
+                  const error = validateEmail(email)
+                  setErrors(prev => ({ ...prev, email: error || undefined }))
+                }}
+                className={`pl-10 ${errors.email ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                 disabled={loading}
+                required
               />
             </div>
+            {errors.email && (
+              <p className="text-sm text-red-500">{errors.email}</p>
+            )}
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -87,9 +149,14 @@ export function LoginForm() {
                 type={showPassword ? 'text' : 'password'}
                 placeholder="••••••••"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="pl-10 pr-10"
+                onChange={handlePasswordChange}
+                onBlur={() => {
+                  const error = validatePassword(password)
+                  setErrors(prev => ({ ...prev, password: error || undefined }))
+                }}
+                className={`pl-10 pr-10 ${errors.password ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                 disabled={loading}
+                required
               />
               <button
                 type="button"
@@ -100,10 +167,17 @@ export function LoginForm() {
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
+            {errors.password && (
+              <p className="text-sm text-red-500">{errors.password}</p>
+            )}
           </div>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button 
+            type="submit" 
+            className="w-full" 
+            disabled={loading || !email.trim() || !password.trim() || !!errors.email || !!errors.password}
+          >
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

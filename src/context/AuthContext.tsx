@@ -35,12 +35,61 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const signUp = async (email: string, password: string, fullName: string) => {
+    // Server-side validation - defense in depth
+    const trimmedEmail = email?.trim() || ''
+    const trimmedPassword = password?.trim() || ''
+    const trimmedFullName = fullName?.trim() || ''
+
+    if (!trimmedEmail || !trimmedPassword || !trimmedFullName) {
+      return {
+        error: {
+          message: 'All fields are required',
+          name: 'ValidationError',
+          status: 400,
+        } as import('@supabase/supabase-js').AuthError,
+      }
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(trimmedEmail)) {
+      return {
+        error: {
+          message: 'Invalid email format',
+          name: 'ValidationError',
+          status: 400,
+        } as import('@supabase/supabase-js').AuthError,
+      }
+    }
+
+    // Validate password length
+    if (trimmedPassword.length < 8) {
+      return {
+        error: {
+          message: 'Password must be at least 8 characters long',
+          name: 'ValidationError',
+          status: 400,
+        } as import('@supabase/supabase-js').AuthError,
+      }
+    }
+
+    // Validate full name
+    if (trimmedFullName.length < 2) {
+      return {
+        error: {
+          message: 'Full name must be at least 2 characters long',
+          name: 'ValidationError',
+          status: 400,
+        } as import('@supabase/supabase-js').AuthError,
+      }
+    }
+
     const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
+      email: trimmedEmail,
+      password: trimmedPassword,
       options: {
         data: {
-          full_name: fullName,
+          full_name: trimmedFullName,
         },
       },
     })
@@ -61,9 +110,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const signIn = async (email: string, password: string) => {
+    // Server-side validation - defense in depth
+    const trimmedEmail = email?.trim() || ''
+    const trimmedPassword = password?.trim() || ''
+
+    if (!trimmedEmail || !trimmedPassword) {
+      return {
+        error: {
+          message: 'Email and password are required',
+          name: 'ValidationError',
+          status: 400,
+        } as import('@supabase/supabase-js').AuthError,
+      }
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(trimmedEmail)) {
+      return {
+        error: {
+          message: 'Invalid email format',
+          name: 'ValidationError',
+          status: 400,
+        } as import('@supabase/supabase-js').AuthError,
+      }
+    }
+
     const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+      email: trimmedEmail,
+      password: trimmedPassword,
     })
 
     // If login succeeded, verify email is confirmed
