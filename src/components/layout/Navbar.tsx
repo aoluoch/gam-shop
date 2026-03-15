@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ShoppingCart, User, Search, ChevronDown, Menu, LogOut } from 'lucide-react';
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useCart } from '@/hooks/useCart';
 
@@ -26,23 +26,48 @@ export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [shopMenuOpen, setShopMenuOpen] = useState(false);
-  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+
+  const shopCloseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const profileCloseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleShopMouseEnter = useCallback(() => {
-    if (closeTimeoutRef.current) {
-      clearTimeout(closeTimeoutRef.current);
-      closeTimeoutRef.current = null;
+    if (shopCloseTimeoutRef.current) {
+      clearTimeout(shopCloseTimeoutRef.current);
+      shopCloseTimeoutRef.current = null;
     }
     setShopMenuOpen(true);
   }, []);
 
   const handleShopMouseLeave = useCallback(() => {
-    closeTimeoutRef.current = setTimeout(() => {
+    shopCloseTimeoutRef.current = setTimeout(() => {
       setShopMenuOpen(false);
-    }, 300);
+    }, 150);
+  }, []);
+
+  const handleProfileMouseEnter = useCallback(() => {
+    if (profileCloseTimeoutRef.current) {
+      clearTimeout(profileCloseTimeoutRef.current);
+      profileCloseTimeoutRef.current = null;
+    }
+    setProfileMenuOpen(true);
+  }, []);
+
+  const handleProfileMouseLeave = useCallback(() => {
+    profileCloseTimeoutRef.current = setTimeout(() => {
+      setProfileMenuOpen(false);
+    }, 150);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (shopCloseTimeoutRef.current) clearTimeout(shopCloseTimeoutRef.current);
+      if (profileCloseTimeoutRef.current) clearTimeout(profileCloseTimeoutRef.current);
+    };
   }, []);
 
   const handleSignOut = async () => {
+    setProfileMenuOpen(false);
     await signOut();
     navigate(ROUTES.HOME);
   };
@@ -55,7 +80,7 @@ export function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
@@ -167,59 +192,71 @@ export function Navbar() {
             </Button>
 
             {/* Account Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" aria-label="Account">
-                  <User className="h-5 w-5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                {user ? (
-                  <>
-                    <div className="px-2 py-1.5 text-sm font-medium truncate">
-                      {user.user_metadata?.full_name || user.email}
-                    </div>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild>
-                      <Link to={ROUTES.ACCOUNT} className="w-full cursor-pointer">
-                        My Account
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to={ROUTES.ORDERS} className="w-full cursor-pointer">
-                        My Orders
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to={ROUTES.WISHLIST} className="w-full cursor-pointer">
-                        Wishlist
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem 
-                      className="w-full cursor-pointer text-destructive focus:text-destructive"
-                      onClick={handleSignOut}
-                    >
-                      <LogOut className="mr-2 h-4 w-4" />
-                      Sign out
-                    </DropdownMenuItem>
-                  </>
-                ) : (
-                  <>
-                    <DropdownMenuItem asChild>
-                      <Link to={ROUTES.LOGIN} className="w-full cursor-pointer">
-                        Login
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to={ROUTES.REGISTER} className="w-full cursor-pointer">
-                        Register
-                      </Link>
-                    </DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <div
+              className="relative"
+              onMouseEnter={handleProfileMouseEnter}
+              onMouseLeave={handleProfileMouseLeave}
+            >
+              <DropdownMenu open={profileMenuOpen} onOpenChange={setProfileMenuOpen}>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" aria-label="Account">
+                    <User className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent
+                  align="end"
+                  className="w-48"
+                  onMouseEnter={handleProfileMouseEnter}
+                  onMouseLeave={handleProfileMouseLeave}
+                >
+                  {user ? (
+                    <>
+                      <div className="px-2 py-1.5 text-sm font-medium truncate">
+                        {user.user_metadata?.full_name || user.email}
+                      </div>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link to={ROUTES.ACCOUNT} className="w-full cursor-pointer" onClick={() => setProfileMenuOpen(false)}>
+                          My Account
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to={ROUTES.ORDERS} className="w-full cursor-pointer" onClick={() => setProfileMenuOpen(false)}>
+                          My Orders
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to={ROUTES.WISHLIST} className="w-full cursor-pointer" onClick={() => setProfileMenuOpen(false)}>
+                          Wishlist
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem 
+                        className="w-full cursor-pointer text-destructive focus:text-destructive"
+                        onClick={handleSignOut}
+                      >
+                        <LogOut className="mr-2 h-4 w-4" />
+                        Sign out
+                      </DropdownMenuItem>
+                    </>
+                  ) : (
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link to={ROUTES.LOGIN} className="w-full cursor-pointer" onClick={() => setProfileMenuOpen(false)}>
+                          Login
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to={ROUTES.REGISTER} className="w-full cursor-pointer" onClick={() => setProfileMenuOpen(false)}>
+                          Register
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
 
             {/* Mobile Menu */}
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>

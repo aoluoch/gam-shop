@@ -30,11 +30,7 @@ function DropdownMenu({ children, open: controlledOpen, onOpenChange }: {
 
   return (
     <DropdownMenuContext.Provider value={{ open, setOpen }}>
-      <div 
-        className="relative inline-block"
-        onMouseEnter={() => setOpen(true)}
-        onMouseLeave={() => setOpen(false)}
-      >
+      <div className="relative inline-block">
         {children}
       </div>
     </DropdownMenuContext.Provider>
@@ -84,7 +80,7 @@ function DropdownMenuContent({
     <div
       data-slot="dropdown-menu-content"
       className={cn(
-        "absolute z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md",
+        "absolute z-50 min-w-32 overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md",
         "animate-in fade-in-0 zoom-in-95",
         alignClasses[align],
         className
@@ -240,7 +236,7 @@ function DropdownMenuSubContent({ className, ...props }: React.ComponentProps<"d
     <div
       data-slot="dropdown-menu-sub-content"
       className={cn(
-        "absolute left-full top-0 z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-lg",
+        "absolute left-full top-0 z-50 min-w-32 overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-lg",
         "animate-in fade-in-0 zoom-in-95",
         className
       )}
