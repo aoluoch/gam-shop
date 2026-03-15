@@ -604,10 +604,10 @@ export function ProductPage() {
             )}
 
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+            <div className="flex flex-col gap-3">
               <Button
                 size="lg"
-                className="flex-1 w-full sm:w-auto"
+                className="w-full text-base py-6"
                 onClick={handleAddToCart}
                 disabled={!canAddToCart}
               >
@@ -620,7 +620,7 @@ export function ProductPage() {
                 onClick={handleWishlistToggle}
                 disabled={wishlistLoading}
                 title={inWishlist ? "Remove from Wishlist" : "Add to Wishlist"}
-                className="w-full sm:w-auto"
+                className="w-full text-base py-6"
               >
                 {wishlistLoading ? (
                   <Loader2 className="h-5 w-5 animate-spin" />
