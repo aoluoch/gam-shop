@@ -17,10 +17,10 @@ export interface DashboardStats {
 }
 
 export async function getDashboardStats(): Promise<DashboardStats> {
-  const [ordersResult, customersResult, productsResult, lowStockResult] = await Promise.all([
+  const [ordersResult, customersResult, productsResult, lowStockResult, recentOrdersResult] = await Promise.all([
     supabase
       .from('orders')
-      .select('id, total, payment_status, status, created_at, order_number')
+      .select('id, total, payment_status')
       .order('created_at', { ascending: false }),
     supabase
       .from('profiles')
@@ -32,9 +32,17 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       .eq('is_active', true),
     supabase
       .from('products')
-      .select('id, name, stock, thumbnail')
+      .select('id, name, stock, thumbnail, sku')
       .lt('stock', 10)
       .eq('is_active', true),
+    supabase
+      .from('orders')
+      .select(`
+        *,
+        order_items (*)
+      `)
+      .order('created_at', { ascending: false })
+      .limit(5),
   ])
 
   const orders = ordersResult.data || []
@@ -45,9 +53,9 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   return {
     totalRevenue,
     totalOrders: orders.length,
-    totalCustomers: customersResult.data?.length || 0,
-    totalProducts: productsResult.data?.length || 0,
-    recentOrders: orders.slice(0, 5).map(mapOrder),
+    totalCustomers: customersResult.count || 0,
+    totalProducts: productsResult.count || 0,
+    recentOrders: (recentOrdersResult.data || []).map(mapOrder),
     lowStockProducts: (lowStockResult.data || []).map(mapProduct),
   }
 }
@@ -67,6 +75,10 @@ export async function getProducts(): Promise<Product[]> {
     return []
   }
 
+  if (!data) {
+    return []
+  }
+
   return data.map(mapProduct)
 }
 
@@ -79,6 +91,10 @@ export async function getProductById(id: string): Promise<Product | null> {
 
   if (error) {
     console.error('Error fetching product:', error)
+    return null
+  }
+
+  if (!data) {
     return null
   }
 
@@ -326,6 +342,10 @@ export async function getOrders(): Promise<Order[]> {
     return []
   }
 
+  if (!data) {
+    return []
+  }
+
   return data.map(mapOrder)
 }
 
@@ -341,6 +361,10 @@ export async function getOrderById(id: string): Promise<Order | null> {
 
   if (error) {
     console.error('Error fetching order:', error)
+    return null
+  }
+
+  if (!data) {
     return null
   }
 
