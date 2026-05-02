@@ -1,17 +1,17 @@
-import { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { MainLayout, AdminLayout } from '@/components/layout';
-import { ScrollToTop } from '@/components/common/ScrollToTop';
-import { ROUTES } from '@/constants/routes';
-import { 
-  PrivacyPolicyPage, 
+import { useState, useEffect } from "react";
+import { BrowserRouter, Routes, Route, Navigate, Link } from "react-router-dom";
+import { MainLayout, AdminLayout } from "@/components/layout";
+import { ScrollToTop } from "@/components/common/ScrollToTop";
+import { ROUTES } from "@/constants/routes";
+import {
+  PrivacyPolicyPage,
   TermsPage,
   FAQPage,
   ShippingPage,
   ReturnsPage,
-  LoginPage, 
-  RegisterPage, 
-  ForgotPasswordPage, 
+  LoginPage,
+  RegisterPage,
+  ForgotPasswordPage,
   ResetPasswordPage,
   CartPage,
   AccountPage,
@@ -35,24 +35,72 @@ import {
   AdminFinancialSheetPage,
   WishlistPage,
   AboutPage,
-} from '@/pages';
-import { AuthProvider } from '@/context/AuthContext';
-import { CartProvider } from '@/context/CartContext';
-import { ToastProvider } from '@/context/ToastContext';
-import { useAuth } from '@/hooks/useAuth';
-import { useAdmin } from '@/hooks/useAdmin';
-import { ProductCard } from '@/components/product';
-import { getProducts, getProductsByCategory } from '@/services/product.service';
-import type { Product } from '@/types/product';
-import { HeroSection, FeaturedProducts, CategorySection, TestimonialsSection } from '@/components/home';
-import { ContactForm } from '@/components/contact';
-import { Loader2 } from 'lucide-react';
-import { supabase } from '@/services/supabase';
+} from "@/pages";
+import { AuthProvider } from "@/context/AuthContext";
+import { CartProvider } from "@/context/CartContext";
+import { ToastProvider } from "@/context/ToastContext";
+import { useAuth } from "@/hooks/useAuth";
+import { useAdmin } from "@/hooks/useAdmin";
+import { ProductCard } from "@/components/product";
+import { getProducts, getProductsByCategory } from "@/services/product.service";
+import type { Product } from "@/types/product";
+import {
+  HeroSection,
+  FeaturedProducts,
+  CategorySection,
+  TestimonialsSection,
+} from "@/components/home";
+import { ContactForm } from "@/components/contact";
+import { AlertCircle, Loader2, X } from "lucide-react";
+import { supabase } from "@/services/supabase";
+import { Button } from "@/components/ui/button";
 
 // Placeholder pages - will be replaced with actual page components
 function HomePage() {
+  const [showSignupBanner, setShowSignupBanner] = useState(true);
+
   return (
     <div>
+      {showSignupBanner && (
+        <div className="border-b bg-amber-50/80 text-amber-950">
+          <div className="container mx-auto px-4 py-3 md:py-4">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div className="flex gap-3">
+                <AlertCircle className="h-5 w-5 text-amber-700 mt-0.5" />
+                <div className="space-y-1">
+                  <p className="font-semibold">We fixed a small signup issue</p>
+                  <p className="text-sm text-amber-900/80 max-w-2xl">
+                    If you tried to create an account recently, please try
+                    again. New accounts are processing normally now.
+                  </p>
+                  <ol className="text-sm text-amber-900/80 list-decimal list-inside flex flex-col sm:flex-row sm:gap-4">
+                    <li>Create your account</li>
+                    <li>Confirm your email</li>
+                    <li>Sign in to continue</li>
+                  </ol>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button asChild size="sm">
+                  <Link to={ROUTES.REGISTER}>Create account</Link>
+                </Button>
+                <Button asChild variant="outline" size="sm">
+                  <Link to={ROUTES.LOGIN}>Sign in</Link>
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowSignupBanner(false)}
+                  aria-label="Dismiss signup banner"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       <HeroSection />
       <FeaturedProducts />
       <CategorySection />
@@ -66,7 +114,7 @@ function ShopPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getProducts().then(data => {
+    getProducts().then((data) => {
       setProducts(data);
       setLoading(false);
     });
@@ -75,22 +123,24 @@ function ShopPage() {
   // Set up realtime subscription for stock updates
   useEffect(() => {
     const channel = supabase
-      .channel('shop-products-stock')
+      .channel("shop-products-stock")
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'products',
+          event: "UPDATE",
+          schema: "public",
+          table: "products",
         },
         (payload) => {
           // Update product stock in real-time
-          setProducts(prev => prev.map(product => 
-            product.id === payload.new.id 
-              ? { ...product, stock: Number(payload.new.stock) }
-              : product
-          ));
-        }
+          setProducts((prev) =>
+            prev.map((product) =>
+              product.id === payload.new.id
+                ? { ...product, stock: Number(payload.new.stock) }
+                : product,
+            ),
+          );
+        },
       )
       .subscribe();
 
@@ -109,15 +159,21 @@ function ShopPage() {
 
   return (
     <div className="container mx-auto px-4 py-12">
-      <h1 className="text-3xl font-bold text-primary mb-4">Shop All Products</h1>
-      <p className="text-muted-foreground mb-8">Browse our collection of books, apparel, and accessories.</p>
+      <h1 className="text-3xl font-bold text-primary mb-4">
+        Shop All Products
+      </h1>
+      <p className="text-muted-foreground mb-8">
+        Browse our collection of books, apparel, and accessories.
+      </p>
       {products.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-muted-foreground">No products available at the moment.</p>
+          <p className="text-muted-foreground">
+            No products available at the moment.
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {products.map(product => (
+          {products.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
@@ -131,7 +187,7 @@ function BooksPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getProductsByCategory('books').then(data => {
+    getProductsByCategory("books").then((data) => {
       setBooks(data);
       setLoading(false);
     });
@@ -140,23 +196,25 @@ function BooksPage() {
   // Set up realtime subscription for stock updates
   useEffect(() => {
     const channel = supabase
-      .channel('books-products-stock')
+      .channel("books-products-stock")
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'products',
-          filter: 'category=eq.books',
+          event: "UPDATE",
+          schema: "public",
+          table: "products",
+          filter: "category=eq.books",
         },
         (payload) => {
           // Update product stock in real-time
-          setBooks(prev => prev.map(product => 
-            product.id === payload.new.id 
-              ? { ...product, stock: Number(payload.new.stock) }
-              : product
-          ));
-        }
+          setBooks((prev) =>
+            prev.map((product) =>
+              product.id === payload.new.id
+                ? { ...product, stock: Number(payload.new.stock) }
+                : product,
+            ),
+          );
+        },
       )
       .subscribe();
 
@@ -176,14 +234,18 @@ function BooksPage() {
   return (
     <div className="container mx-auto px-4 py-12">
       <h1 className="text-3xl font-bold text-primary mb-4">Books</h1>
-      <p className="text-muted-foreground mb-8">Spiritual books by Apostle David Owusu and Rev. Eunice.</p>
+      <p className="text-muted-foreground mb-8">
+        Spiritual books by Apostle David Owusu and Rev. Eunice.
+      </p>
       {books.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-muted-foreground">No books available at the moment.</p>
+          <p className="text-muted-foreground">
+            No books available at the moment.
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {books.map(product => (
+          {books.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
@@ -197,7 +259,7 @@ function ApparelPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getProductsByCategory('apparel').then(data => {
+    getProductsByCategory("apparel").then((data) => {
       setApparel(data);
       setLoading(false);
     });
@@ -206,23 +268,25 @@ function ApparelPage() {
   // Set up realtime subscription for stock updates
   useEffect(() => {
     const channel = supabase
-      .channel('apparel-products-stock')
+      .channel("apparel-products-stock")
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'products',
-          filter: 'category=eq.apparel',
+          event: "UPDATE",
+          schema: "public",
+          table: "products",
+          filter: "category=eq.apparel",
         },
         (payload) => {
           // Update product stock in real-time
-          setApparel(prev => prev.map(product => 
-            product.id === payload.new.id 
-              ? { ...product, stock: Number(payload.new.stock) }
-              : product
-          ));
-        }
+          setApparel((prev) =>
+            prev.map((product) =>
+              product.id === payload.new.id
+                ? { ...product, stock: Number(payload.new.stock) }
+                : product,
+            ),
+          );
+        },
       )
       .subscribe();
 
@@ -242,14 +306,18 @@ function ApparelPage() {
   return (
     <div className="container mx-auto px-4 py-12">
       <h1 className="text-3xl font-bold text-primary mb-4">Apparel</h1>
-      <p className="text-muted-foreground mb-8">T-shirts in various sizes and colors.</p>
+      <p className="text-muted-foreground mb-8">
+        T-shirts in various sizes and colors.
+      </p>
       {apparel.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-muted-foreground">No apparel available at the moment.</p>
+          <p className="text-muted-foreground">
+            No apparel available at the moment.
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {apparel.map(product => (
+          {apparel.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
@@ -263,7 +331,7 @@ function AccessoriesPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getProductsByCategory('accessories').then(data => {
+    getProductsByCategory("accessories").then((data) => {
       setAccessories(data);
       setLoading(false);
     });
@@ -272,23 +340,25 @@ function AccessoriesPage() {
   // Set up realtime subscription for stock updates
   useEffect(() => {
     const channel = supabase
-      .channel('accessories-products-stock')
+      .channel("accessories-products-stock")
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'products',
-          filter: 'category=eq.accessories',
+          event: "UPDATE",
+          schema: "public",
+          table: "products",
+          filter: "category=eq.accessories",
         },
         (payload) => {
           // Update product stock in real-time
-          setAccessories(prev => prev.map(product => 
-            product.id === payload.new.id 
-              ? { ...product, stock: Number(payload.new.stock) }
-              : product
-          ));
-        }
+          setAccessories((prev) =>
+            prev.map((product) =>
+              product.id === payload.new.id
+                ? { ...product, stock: Number(payload.new.stock) }
+                : product,
+            ),
+          );
+        },
       )
       .subscribe();
 
@@ -307,15 +377,21 @@ function AccessoriesPage() {
 
   return (
     <div className="container mx-auto px-4 py-6 md:py-12">
-      <h1 className="text-2xl sm:text-3xl font-bold text-primary mb-3 md:mb-4">Accessories</h1>
-      <p className="text-sm sm:text-base text-muted-foreground mb-6 md:mb-8">Caps and rubber bands.</p>
+      <h1 className="text-2xl sm:text-3xl font-bold text-primary mb-3 md:mb-4">
+        Accessories
+      </h1>
+      <p className="text-sm sm:text-base text-muted-foreground mb-6 md:mb-8">
+        Caps and rubber bands.
+      </p>
       {accessories.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-muted-foreground">No accessories available at the moment.</p>
+          <p className="text-muted-foreground">
+            No accessories available at the moment.
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-          {accessories.map(product => (
+          {accessories.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
@@ -324,15 +400,17 @@ function AccessoriesPage() {
   );
 }
 
-
 function ContactPage() {
   return (
     <div className="container mx-auto px-4 py-6 md:py-12">
       <div className="text-center mb-6 md:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-primary mb-3 md:mb-4">Contact Us</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-primary mb-3 md:mb-4">
+          Contact Us
+        </h1>
         <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto">
-          Have questions about our products or ministry? We'd love to hear from you. 
-          Fill out the form below and we'll get back to you as soon as possible.
+          Have questions about our products or ministry? We'd love to hear from
+          you. Fill out the form below and we'll get back to you as soon as
+          possible.
         </p>
       </div>
       <ContactForm />
@@ -344,7 +422,7 @@ function ContactPage() {
 function AdminRoute({ children }: { children: React.ReactNode }) {
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdmin();
-  
+
   if (authLoading || adminLoading) {
     return (
       <div className="container mx-auto px-4 py-12 flex items-center justify-center min-h-[60vh]">
@@ -352,22 +430,22 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
-  
+
   if (!user) {
     return <Navigate to={ROUTES.LOGIN} replace />;
   }
-  
+
   if (!isAdmin) {
     return <Navigate to={ROUTES.ACCOUNT} replace />;
   }
-  
+
   return <>{children}</>;
 }
 
 // Protected route wrapper
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
-  
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-12 flex items-center justify-center min-h-[60vh]">
@@ -375,18 +453,18 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
-  
+
   if (!user) {
     return <Navigate to={ROUTES.LOGIN} replace />;
   }
-  
+
   return <>{children}</>;
 }
 
 // Guest route wrapper (redirect if already logged in)
 function GuestRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
-  
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-12 flex items-center justify-center min-h-[60vh]">
@@ -394,15 +472,13 @@ function GuestRoute({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
-  
+
   if (user) {
     return <Navigate to={ROUTES.ACCOUNT} replace />;
   }
-  
+
   return <>{children}</>;
 }
-
-
 
 function AppRoutes() {
   return (
@@ -419,44 +495,134 @@ function AppRoutes() {
         <Route path={ROUTES.ABOUT} element={<AboutPage />} />
         <Route path={ROUTES.CONTACT} element={<ContactPage />} />
         <Route path={ROUTES.CART} element={<CartPage />} />
-        <Route path={ROUTES.CHECKOUT} element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
+        <Route
+          path={ROUTES.CHECKOUT}
+          element={
+            <ProtectedRoute>
+              <CheckoutPage />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/order-success" element={<OrderSuccessPage />} />
         <Route path={ROUTES.PRIVACY} element={<PrivacyPolicyPage />} />
         <Route path={ROUTES.TERMS} element={<TermsPage />} />
         <Route path={ROUTES.FAQ} element={<FAQPage />} />
         <Route path={ROUTES.SHIPPING} element={<ShippingPage />} />
         <Route path={ROUTES.RETURNS} element={<ReturnsPage />} />
-        <Route path={ROUTES.ORDER_TRACK} element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
-        
+        <Route
+          path={ROUTES.ORDER_TRACK}
+          element={
+            <ProtectedRoute>
+              <OrdersPage />
+            </ProtectedRoute>
+          }
+        />
+
         {/* Guest-only routes (redirect if logged in) */}
-        <Route path={ROUTES.LOGIN} element={<GuestRoute><LoginPage /></GuestRoute>} />
-        <Route path={ROUTES.REGISTER} element={<GuestRoute><RegisterPage /></GuestRoute>} />
-        <Route path={ROUTES.FORGOT_PASSWORD} element={<GuestRoute><ForgotPasswordPage /></GuestRoute>} />
+        <Route
+          path={ROUTES.LOGIN}
+          element={
+            <GuestRoute>
+              <LoginPage />
+            </GuestRoute>
+          }
+        />
+        <Route
+          path={ROUTES.REGISTER}
+          element={
+            <GuestRoute>
+              <RegisterPage />
+            </GuestRoute>
+          }
+        />
+        <Route
+          path={ROUTES.FORGOT_PASSWORD}
+          element={
+            <GuestRoute>
+              <ForgotPasswordPage />
+            </GuestRoute>
+          }
+        />
         <Route path={ROUTES.RESET_PASSWORD} element={<ResetPasswordPage />} />
-        
+
         {/* Protected routes (require login) */}
-        <Route path={ROUTES.ACCOUNT} element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
-        <Route path={ROUTES.ORDERS} element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
-        <Route path={`${ROUTES.ORDERS}/:id`} element={<ProtectedRoute><OrderDetailPage /></ProtectedRoute>} />
-        <Route path={ROUTES.WISHLIST} element={<ProtectedRoute><WishlistPage /></ProtectedRoute>} />
+        <Route
+          path={ROUTES.ACCOUNT}
+          element={
+            <ProtectedRoute>
+              <AccountPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ORDERS}
+          element={
+            <ProtectedRoute>
+              <OrdersPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={`${ROUTES.ORDERS}/:id`}
+          element={
+            <ProtectedRoute>
+              <OrderDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.WISHLIST}
+          element={
+            <ProtectedRoute>
+              <WishlistPage />
+            </ProtectedRoute>
+          }
+        />
       </Route>
 
       {/* Admin routes with AdminLayout (sidebar navigation) */}
-      <Route element={<AdminRoute><AdminLayout /></AdminRoute>}>
+      <Route
+        element={
+          <AdminRoute>
+            <AdminLayout />
+          </AdminRoute>
+        }
+      >
         <Route path={ROUTES.ADMIN} element={<AdminDashboardPage />} />
         <Route path={ROUTES.ADMIN_PRODUCTS} element={<AdminProductsPage />} />
-        <Route path={`${ROUTES.ADMIN_PRODUCTS}/new`} element={<AdminProductFormPage />} />
-        <Route path={`${ROUTES.ADMIN_PRODUCTS}/:id/edit`} element={<AdminProductFormPage />} />
+        <Route
+          path={`${ROUTES.ADMIN_PRODUCTS}/new`}
+          element={<AdminProductFormPage />}
+        />
+        <Route
+          path={`${ROUTES.ADMIN_PRODUCTS}/:id/edit`}
+          element={<AdminProductFormPage />}
+        />
         <Route path={ROUTES.ADMIN_ORDERS} element={<AdminOrdersPage />} />
-        <Route path={`${ROUTES.ADMIN_ORDERS}/:id`} element={<AdminOrderDetailPage />} />
+        <Route
+          path={`${ROUTES.ADMIN_ORDERS}/:id`}
+          element={<AdminOrderDetailPage />}
+        />
         <Route path={ROUTES.ADMIN_CUSTOMERS} element={<AdminCustomersPage />} />
-        <Route path={ROUTES.ADMIN_CATEGORIES} element={<AdminCategoriesPage />} />
+        <Route
+          path={ROUTES.ADMIN_CATEGORIES}
+          element={<AdminCategoriesPage />}
+        />
         <Route path={ROUTES.ADMIN_REVIEWS} element={<AdminReviewsPage />} />
-        <Route path={ROUTES.ADMIN_MESSAGES} element={<AdminContactMessagesPage />} />
+        <Route
+          path={ROUTES.ADMIN_MESSAGES}
+          element={<AdminContactMessagesPage />}
+        />
         <Route path={ROUTES.ADMIN_SETTINGS} element={<AdminSettingsPage />} />
         <Route path={ROUTES.ADMIN_ANALYTICS} element={<AdminAnalyticsPage />} />
-        <Route path={ROUTES.ADMIN_STOCK} element={<AdminStockMonitoringPage />} />
-        <Route path={ROUTES.ADMIN_FINANCIALS} element={<AdminFinancialSheetPage />} />
+        <Route
+          path={ROUTES.ADMIN_STOCK}
+          element={<AdminStockMonitoringPage />}
+        />
+        <Route
+          path={ROUTES.ADMIN_FINANCIALS}
+          element={<AdminFinancialSheetPage />}
+        />
       </Route>
     </Routes>
   );
