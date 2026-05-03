@@ -1,289 +1,320 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { ShoppingCart, Heart, ChevronLeft, ChevronRight, Check, AlertCircle, Loader2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { getOptimizedImageUrl } from '@/services/cloudinary.service'
-import { useCart } from '@/hooks/useCart'
-import { useAuth } from '@/hooks/useAuth'
-import { useToast } from '@/hooks/useToast'
-import { supabase } from '@/services/supabase'
-import { addToWishlist, removeFromWishlist, isInWishlist } from '@/services/wishlist.service'
-import { cn } from '@/lib/utils'
-import { ReviewSection } from '@/components/product/ReviewSection'
-import type { Product, ProductVariant } from '@/types/product'
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import {
+  ShoppingCart,
+  Heart,
+  ChevronLeft,
+  ChevronRight,
+  Check,
+  AlertCircle,
+  Loader2,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { getOptimizedImageUrl } from "@/services/cloudinary.service";
+import { useCart } from "@/hooks/useCart";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/useToast";
+import { supabase } from "@/services/supabase";
+import {
+  addToWishlist,
+  removeFromWishlist,
+  isInWishlist,
+} from "@/services/wishlist.service";
+import { cn } from "@/lib/utils";
+import { ReviewSection } from "@/components/product/ReviewSection";
+import type { Product, ProductVariant } from "@/types/product";
 
 export function ProductPage() {
-  const { id } = useParams<{ id: string }>()
-  const navigate = useNavigate()
-  const { addItem, isInCart } = useCart()
-  const { user } = useAuth()
-  const { success, error: showError } = useToast()
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { addItem, isInCart } = useCart();
+  const { user } = useAuth();
+  const { success, error: showError } = useToast();
 
-  const [product, setProduct] = useState<Product | null>(null)
-  const [inWishlist, setInWishlist] = useState(false)
-  const [wishlistLoading, setWishlistLoading] = useState(false)
-  const [wishlistItemId, setWishlistItemId] = useState<string | null>(null)
-  const [variants, setVariants] = useState<ProductVariant[]>([])
-  const [loading, setLoading] = useState(true)
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0)
-  const [selectedSize, setSelectedSize] = useState<string | null>(null)
-  const [selectedColor, setSelectedColor] = useState<string | null>(null)
-  const [quantity, setQuantity] = useState(1)
+  const [product, setProduct] = useState<Product | null>(null);
+  const [inWishlist, setInWishlist] = useState(false);
+  const [wishlistLoading, setWishlistLoading] = useState(false);
+  const [wishlistItemId, setWishlistItemId] = useState<string | null>(null);
+  const [variants, setVariants] = useState<ProductVariant[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [quantity, setQuantity] = useState(1);
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [touchEndX, setTouchEndX] = useState<number | null>(null);
 
-  const loadProduct = useCallback(async (productId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .eq('id', productId)
-        .eq('is_active', true)
-        .single()
+  const loadProduct = useCallback(
+    async (productId: string) => {
+      try {
+        const { data, error } = await supabase
+          .from("products")
+          .select("*")
+          .eq("id", productId)
+          .eq("is_active", true)
+          .single();
 
-      if (error || !data) {
-        showError('Product not found')
-        navigate('/shop')
-        return
+        if (error || !data) {
+          showError("Product not found");
+          navigate("/shop");
+          return;
+        }
+
+        const mappedProduct: Product = {
+          id: data.id,
+          name: data.name,
+          description: data.description,
+          price: Number(data.price),
+          compareAtPrice: data.compare_at_price
+            ? Number(data.compare_at_price)
+            : undefined,
+          category: data.category,
+          subcategory: data.subcategory,
+          images: data.images || [],
+          thumbnail: data.thumbnail,
+          stock: Number(data.stock),
+          sku: data.sku,
+          featured: data.featured,
+          author: data.author,
+          size: data.size,
+          color: data.color,
+          createdAt: data.created_at,
+          updatedAt: data.updated_at,
+        };
+
+        setProduct(mappedProduct);
+
+        // Fetch variants
+        const { data: variantsData, error: variantsError } = await supabase
+          .from("product_variants")
+          .select("*")
+          .eq("product_id", productId)
+          .eq("is_active", true);
+
+        if (variantsError) {
+          console.error("Error fetching variants:", variantsError);
+        }
+
+        if (variantsData && variantsData.length > 0) {
+          const mappedVariants: ProductVariant[] = variantsData.map((v) => ({
+            id: v.id,
+            productId: v.product_id,
+            size: v.size,
+            color: v.color,
+            stock: Number(v.stock),
+            skuSuffix: v.sku_suffix,
+            priceAdjustment: v.price_adjustment
+              ? Number(v.price_adjustment)
+              : undefined,
+            isActive: v.is_active,
+          }));
+          setVariants(mappedVariants);
+          mappedProduct.hasVariants = true;
+          mappedProduct.variants = mappedVariants;
+        } else {
+          setVariants([]);
+        }
+      } catch (err) {
+        console.error("Error loading product:", err);
+        showError("Failed to load product");
+      } finally {
+        setLoading(false);
       }
-
-      const mappedProduct: Product = {
-        id: data.id,
-        name: data.name,
-        description: data.description,
-        price: Number(data.price),
-        compareAtPrice: data.compare_at_price ? Number(data.compare_at_price) : undefined,
-        category: data.category,
-        subcategory: data.subcategory,
-        images: data.images || [],
-        thumbnail: data.thumbnail,
-        stock: Number(data.stock),
-        sku: data.sku,
-        featured: data.featured,
-        author: data.author,
-        size: data.size,
-        color: data.color,
-        createdAt: data.created_at,
-        updatedAt: data.updated_at,
-      }
-
-      setProduct(mappedProduct)
-
-      // Fetch variants
-      const { data: variantsData, error: variantsError } = await supabase
-        .from('product_variants')
-        .select('*')
-        .eq('product_id', productId)
-        .eq('is_active', true)
-
-      if (variantsError) {
-        console.error('Error fetching variants:', variantsError)
-      }
-
-      if (variantsData && variantsData.length > 0) {
-        const mappedVariants: ProductVariant[] = variantsData.map(v => ({
-          id: v.id,
-          productId: v.product_id,
-          size: v.size,
-          color: v.color,
-          stock: Number(v.stock),
-          skuSuffix: v.sku_suffix,
-          priceAdjustment: v.price_adjustment ? Number(v.price_adjustment) : undefined,
-          isActive: v.is_active,
-        }))
-        setVariants(mappedVariants)
-        mappedProduct.hasVariants = true
-        mappedProduct.variants = mappedVariants
-      } else {
-        setVariants([])
-      }
-    } catch (err) {
-      console.error('Error loading product:', err)
-      showError('Failed to load product')
-    } finally {
-      setLoading(false)
-    }
-  }, [navigate, showError])
+    },
+    [navigate, showError],
+  );
 
   useEffect(() => {
     if (id) {
-      loadProduct(id)
+      loadProduct(id);
     }
-  }, [id, loadProduct])
+  }, [id, loadProduct]);
 
   // Set up realtime subscription for stock updates
   useEffect(() => {
-    if (!id) return
+    if (!id) return;
 
     const channel = supabase
       .channel(`product-stock-${id}`)
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'products',
+          event: "UPDATE",
+          schema: "public",
+          table: "products",
           filter: `id=eq.${id}`,
         },
         (payload) => {
           // Update product stock in real-time
           if (payload.new) {
-            const newStock = Number(payload.new.stock)
-            setProduct(prev => prev ? { ...prev, stock: newStock } : null)
+            const newStock = Number(payload.new.stock);
+            setProduct((prev) => (prev ? { ...prev, stock: newStock } : null));
           }
-        }
+        },
       )
-      .subscribe()
+      .subscribe();
 
     // Also subscribe to variant stock updates (always subscribe, variants may be loaded later)
     const variantChannel = supabase
       .channel(`product-variants-stock-${id}`)
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'product_variants',
+          event: "UPDATE",
+          schema: "public",
+          table: "product_variants",
           filter: `product_id=eq.${id}`,
         },
         () => {
           // Reload variants when stock changes
           if (id) {
             supabase
-              .from('product_variants')
-              .select('*')
-              .eq('product_id', id)
-              .eq('is_active', true)
+              .from("product_variants")
+              .select("*")
+              .eq("product_id", id)
+              .eq("is_active", true)
               .then(({ data: variantsData }) => {
                 if (variantsData && variantsData.length > 0) {
-                  const mappedVariants: ProductVariant[] = variantsData.map(v => ({
-                    id: v.id,
-                    productId: v.product_id,
-                    size: v.size,
-                    color: v.color,
-                    stock: Number(v.stock),
-                    skuSuffix: v.sku_suffix,
-                    priceAdjustment: v.price_adjustment ? Number(v.price_adjustment) : undefined,
-                    isActive: v.is_active,
-                  }))
-                  setVariants(mappedVariants)
+                  const mappedVariants: ProductVariant[] = variantsData.map(
+                    (v) => ({
+                      id: v.id,
+                      productId: v.product_id,
+                      size: v.size,
+                      color: v.color,
+                      stock: Number(v.stock),
+                      skuSuffix: v.sku_suffix,
+                      priceAdjustment: v.price_adjustment
+                        ? Number(v.price_adjustment)
+                        : undefined,
+                      isActive: v.is_active,
+                    }),
+                  );
+                  setVariants(mappedVariants);
                 } else {
-                  setVariants([])
+                  setVariants([]);
                 }
-              })
+              });
           }
-        }
+        },
       )
-      .subscribe()
+      .subscribe();
 
     return () => {
-      supabase.removeChannel(channel)
-      supabase.removeChannel(variantChannel)
-    }
-  }, [id])
+      supabase.removeChannel(channel);
+      supabase.removeChannel(variantChannel);
+    };
+  }, [id]);
 
   const checkWishlistStatus = useCallback(async () => {
-    if (!id) return
-    const inList = await isInWishlist(id)
-    setInWishlist(inList)
+    if (!id) return;
+    const inList = await isInWishlist(id);
+    setInWishlist(inList);
     if (inList) {
       const { data } = await supabase
-        .from('wishlist_items')
-        .select('id')
-        .eq('product_id', id)
-        .maybeSingle()
+        .from("wishlist_items")
+        .select("id")
+        .eq("product_id", id)
+        .maybeSingle();
       if (data) {
-        setWishlistItemId(data.id)
+        setWishlistItemId(data.id);
       }
     }
-  }, [id])
+  }, [id]);
 
   useEffect(() => {
     if (user && id) {
-      checkWishlistStatus()
+      checkWishlistStatus();
     } else {
-      setInWishlist(false)
-      setWishlistItemId(null)
+      setInWishlist(false);
+      setWishlistItemId(null);
     }
-  }, [user, id, checkWishlistStatus])
+  }, [user, id, checkWishlistStatus]);
 
   async function handleWishlistToggle() {
     if (!user) {
-      showError('Please login to add items to your wishlist')
-      navigate('/login')
-      return
+      showError("Please login to add items to your wishlist");
+      navigate("/login");
+      return;
     }
 
-    if (!id) return
+    if (!id) return;
 
-    setWishlistLoading(true)
+    setWishlistLoading(true);
     try {
       if (inWishlist && wishlistItemId) {
-        const { error } = await removeFromWishlist(wishlistItemId)
+        const { error } = await removeFromWishlist(wishlistItemId);
         if (error) {
-          showError(error.message)
+          showError(error.message);
         } else {
-          setInWishlist(false)
-          setWishlistItemId(null)
-          success('Removed from wishlist')
+          setInWishlist(false);
+          setWishlistItemId(null);
+          success("Removed from wishlist");
         }
       } else {
-        const { error } = await addToWishlist(id)
+        const { error } = await addToWishlist(id);
         if (error) {
-          showError(error.message)
+          showError(error.message);
         } else {
-          setInWishlist(true)
-          await checkWishlistStatus()
-          success('Added to wishlist')
+          setInWishlist(true);
+          await checkWishlistStatus();
+          success("Added to wishlist");
         }
       }
     } catch (err) {
-      console.error('Wishlist error:', err)
-      showError('Failed to update wishlist')
+      console.error("Wishlist error:", err);
+      showError("Failed to update wishlist");
     } finally {
-      setWishlistLoading(false)
+      setWishlistLoading(false);
     }
   }
 
   // Get unique sizes and colors from variants
   const availableSizes = useMemo(() => {
-    if (variants.length === 0) return []
-    const sizes = [...new Set(variants.map(v => v.size))]
-    const sizeOrder = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL']
+    if (variants.length === 0) return [];
+    const sizes = [...new Set(variants.map((v) => v.size))];
+    const sizeOrder = ["XS", "S", "M", "L", "XL", "XXL", "3XL"];
     return sizes.sort((a, b) => {
-      const aIndex = sizeOrder.indexOf(a)
-      const bIndex = sizeOrder.indexOf(b)
-      if (aIndex === -1 && bIndex === -1) return a.localeCompare(b)
-      if (aIndex === -1) return 1
-      if (bIndex === -1) return -1
-      return aIndex - bIndex
-    })
-  }, [variants])
+      const aIndex = sizeOrder.indexOf(a);
+      const bIndex = sizeOrder.indexOf(b);
+      if (aIndex === -1 && bIndex === -1) return a.localeCompare(b);
+      if (aIndex === -1) return 1;
+      if (bIndex === -1) return -1;
+      return aIndex - bIndex;
+    });
+  }, [variants]);
 
   const availableColors = useMemo(() => {
-    if (variants.length === 0) return []
+    if (variants.length === 0) return [];
     if (!selectedSize) {
-      return [...new Set(variants.map(v => v.color))]
+      return [...new Set(variants.map((v) => v.color))];
     }
-    return [...new Set(variants.filter(v => v.size === selectedSize).map(v => v.color))]
-  }, [variants, selectedSize])
+    return [
+      ...new Set(
+        variants.filter((v) => v.size === selectedSize).map((v) => v.color),
+      ),
+    ];
+  }, [variants, selectedSize]);
 
   // Get stock for selected variant
   const selectedVariant = useMemo(() => {
-    if (!selectedSize || !selectedColor) return null
-    return variants.find(v => v.size === selectedSize && v.color === selectedColor)
-  }, [variants, selectedSize, selectedColor])
+    if (!selectedSize || !selectedColor) return null;
+    return variants.find(
+      (v) => v.size === selectedSize && v.color === selectedColor,
+    );
+  }, [variants, selectedSize, selectedColor]);
 
   const currentStock = useMemo(() => {
     if (variants.length > 0) {
       // For products with variants, only return stock if a variant is selected
       // Otherwise return null to indicate stock is unknown until selection
       if (selectedSize && selectedColor) {
-        return selectedVariant?.stock ?? 0
+        return selectedVariant?.stock ?? 0;
       }
-      return null // Stock unknown until variant is selected
+      return null; // Stock unknown until variant is selected
     }
-    return product?.stock ?? 0
-  }, [variants, selectedVariant, product, selectedSize, selectedColor])
+    return product?.stock ?? 0;
+  }, [variants, selectedVariant, product, selectedSize, selectedColor]);
 
   // Only show "Out of Stock" if:
   // 1. For variant products: a variant is selected AND it's out of stock
@@ -292,47 +323,86 @@ export function ProductPage() {
     if (variants.length > 0) {
       // For variant products, only show out of stock if variant is selected and has 0 stock
       if (selectedSize && selectedColor && currentStock !== null) {
-        return currentStock === 0
+        return currentStock === 0;
       }
-      return false // Don't show out of stock until variant is selected
+      return false; // Don't show out of stock until variant is selected
     }
-    return currentStock !== null && currentStock === 0
-  }, [variants.length, selectedSize, selectedColor, currentStock])
+    return currentStock !== null && currentStock === 0;
+  }, [variants.length, selectedSize, selectedColor, currentStock]);
 
   const canAddToCart = useMemo(() => {
-    if (!product) return false
+    if (!product) return false;
     if (variants.length > 0) {
       // For variant products, require size and color selection and stock > 0
-      return selectedSize && selectedColor && currentStock !== null && currentStock > 0 && quantity <= currentStock
+      return (
+        selectedSize &&
+        selectedColor &&
+        currentStock !== null &&
+        currentStock > 0 &&
+        quantity <= currentStock
+      );
     }
     // For non-variant products, just check stock
-    return currentStock !== null && currentStock > 0 && quantity <= currentStock
-  }, [product, variants.length, selectedSize, selectedColor, currentStock, quantity])
+    return (
+      currentStock !== null && currentStock > 0 && quantity <= currentStock
+    );
+  }, [
+    product,
+    variants.length,
+    selectedSize,
+    selectedColor,
+    currentStock,
+    quantity,
+  ]);
 
   const handleAddToCart = () => {
-    if (!product || !canAddToCart) return
+    if (!product || !canAddToCart) return;
 
     addItem(product, quantity, {
       size: selectedSize || undefined,
       color: selectedColor || undefined,
-    })
+    });
 
-    success(`${product.name} added to cart`)
-  }
+    success(`${product.name} added to cart`);
+  };
 
   const nextImage = () => {
-    if (!product) return
-    setSelectedImageIndex((prev) => 
-      prev === product.images.length - 1 ? 0 : prev + 1
-    )
-  }
+    if (!product) return;
+    setSelectedImageIndex((prev) =>
+      prev === product.images.length - 1 ? 0 : prev + 1,
+    );
+  };
 
   const prevImage = () => {
-    if (!product) return
-    setSelectedImageIndex((prev) => 
-      prev === 0 ? product.images.length - 1 : prev - 1
-    )
-  }
+    if (!product) return;
+    setSelectedImageIndex((prev) =>
+      prev === 0 ? product.images.length - 1 : prev - 1,
+    );
+  };
+
+  const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    setTouchEndX(null);
+    setTouchStartX(event.touches[0]?.clientX ?? null);
+  };
+
+  const handleTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
+    setTouchEndX(event.touches[0]?.clientX ?? null);
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStartX === null || touchEndX === null) return;
+    const deltaX = touchStartX - touchEndX;
+    const swipeThreshold = 40;
+
+    if (deltaX > swipeThreshold) {
+      nextImage();
+      return;
+    }
+
+    if (deltaX < -swipeThreshold) {
+      prevImage();
+    }
+  };
 
   if (loading) {
     return (
@@ -341,15 +411,16 @@ export function ProductPage() {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
       </div>
-    )
+    );
   }
 
   if (!product) {
-    return null
+    return null;
   }
 
-  const images = product.images.length > 0 ? product.images : [product.thumbnail]
-  const currentImage = images[selectedImageIndex] || product.thumbnail
+  const images =
+    product.images.length > 0 ? product.images : [product.thumbnail];
+  const currentImage = images[selectedImageIndex] || product.thumbnail;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -357,13 +428,21 @@ export function ProductPage() {
         {/* Image Gallery */}
         <div className="space-y-4">
           {/* Main Image */}
-          <div className="relative aspect-square bg-muted rounded-lg overflow-hidden">
+          <div
+            className="relative aspect-square bg-muted rounded-lg overflow-hidden"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
             <img
-              src={getOptimizedImageUrl(currentImage, { width: 800, height: 800 })}
+              src={getOptimizedImageUrl(currentImage, {
+                width: 800,
+                height: 800,
+              })}
               alt={product.name}
               className="w-full h-full object-cover"
             />
-            
+
             {images.length > 1 && (
               <>
                 <button
@@ -394,21 +473,26 @@ export function ProductPage() {
 
           {/* Thumbnail Gallery */}
           {images.length > 1 && (
-            <div className="flex gap-2 overflow-x-auto pb-2">
+            <div className="grid grid-cols-4 gap-2 overflow-x-hidden sm:flex sm:gap-2 sm:overflow-x-auto sm:pb-2 touch-pan-y">
               {images.map((image, index) => (
                 <button
                   key={index}
                   onClick={() => setSelectedImageIndex(index)}
                   className={cn(
-                    'shrink-0 w-20 h-20 rounded-md overflow-hidden border-2 transition-colors',
+                    "w-full aspect-square rounded-md overflow-hidden border-2 transition-colors sm:shrink-0 sm:w-20 sm:h-20",
                     selectedImageIndex === index
-                      ? 'border-primary'
-                      : 'border-transparent hover:border-muted-foreground/50'
+                      ? "border-primary"
+                      : "border-transparent hover:border-muted-foreground/50",
                   )}
                 >
                   <img
-                    src={getOptimizedImageUrl(image, { width: 100, height: 100 })}
+                    src={getOptimizedImageUrl(image, {
+                      width: 120,
+                      height: 120,
+                    })}
                     alt={`${product.name} - Image ${index + 1}`}
+                    loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-cover"
                   />
                 </button>
@@ -423,7 +507,9 @@ export function ProductPage() {
             <p className="text-sm text-muted-foreground uppercase tracking-wide mb-1">
               {product.category}
             </p>
-            <h1 className="text-3xl font-bold text-foreground">{product.name}</h1>
+            <h1 className="text-3xl font-bold text-foreground">
+              {product.name}
+            </h1>
             {product.author && (
               <p className="text-muted-foreground mt-1">by {product.author}</p>
             )}
@@ -434,11 +520,12 @@ export function ProductPage() {
             <span className="text-2xl sm:text-3xl font-bold text-primary">
               KES {product.price.toLocaleString()}
             </span>
-            {product.compareAtPrice && product.compareAtPrice > product.price && (
-              <span className="text-base sm:text-lg text-muted-foreground line-through">
-                KES {product.compareAtPrice.toLocaleString()}
-              </span>
-            )}
+            {product.compareAtPrice &&
+              product.compareAtPrice > product.price && (
+                <span className="text-base sm:text-lg text-muted-foreground line-through">
+                  KES {product.compareAtPrice.toLocaleString()}
+                </span>
+              )}
           </div>
 
           {/* Description */}
@@ -462,35 +549,38 @@ export function ProductPage() {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {availableSizes.map((size) => {
-                      const hasStock = variants.some(v => v.size === size && v.stock > 0)
+                      const hasStock = variants.some(
+                        (v) => v.size === size && v.stock > 0,
+                      );
                       return (
                         <button
                           key={size}
                           onClick={() => {
-                            setSelectedSize(size)
+                            setSelectedSize(size);
                             // Reset color if not available for this size
                             if (selectedColor) {
                               const colorAvailable = variants.some(
-                                v => v.size === size && v.color === selectedColor
-                              )
+                                (v) =>
+                                  v.size === size && v.color === selectedColor,
+                              );
                               if (!colorAvailable) {
-                                setSelectedColor(null)
+                                setSelectedColor(null);
                               }
                             }
                           }}
                           disabled={!hasStock}
                           className={cn(
-                            'px-4 py-2 rounded-md text-sm font-medium border transition-colors',
+                            "px-4 py-2 rounded-md text-sm font-medium border transition-colors",
                             selectedSize === size
-                              ? 'bg-primary text-primary-foreground border-primary'
+                              ? "bg-primary text-primary-foreground border-primary"
                               : hasStock
-                                ? 'bg-background hover:bg-muted border-input'
-                                : 'bg-muted text-muted-foreground border-input opacity-50 cursor-not-allowed line-through'
+                                ? "bg-background hover:bg-muted border-input"
+                                : "bg-muted text-muted-foreground border-input opacity-50 cursor-not-allowed line-through",
                           )}
                         >
                           {size}
                         </button>
-                      )
+                      );
                     })}
                   </div>
                 </div>
@@ -508,22 +598,26 @@ export function ProductPage() {
                   <div className="flex flex-wrap gap-2">
                     {availableColors.map((color) => {
                       const variant = selectedSize
-                        ? variants.find(v => v.size === selectedSize && v.color === color)
-                        : variants.find(v => v.color === color && v.stock > 0)
-                      const hasStock = variant && variant.stock > 0
-                      
+                        ? variants.find(
+                            (v) => v.size === selectedSize && v.color === color,
+                          )
+                        : variants.find(
+                            (v) => v.color === color && v.stock > 0,
+                          );
+                      const hasStock = variant && variant.stock > 0;
+
                       return (
                         <button
                           key={color}
                           onClick={() => setSelectedColor(color)}
                           disabled={!hasStock}
                           className={cn(
-                            'flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium border transition-colors',
+                            "flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium border transition-colors",
                             selectedColor === color
-                              ? 'bg-primary text-primary-foreground border-primary'
+                              ? "bg-primary text-primary-foreground border-primary"
                               : hasStock
-                                ? 'bg-background hover:bg-muted border-input'
-                                : 'bg-muted text-muted-foreground border-input opacity-50 cursor-not-allowed'
+                                ? "bg-background hover:bg-muted border-input"
+                                : "bg-muted text-muted-foreground border-input opacity-50 cursor-not-allowed",
                           )}
                         >
                           <span
@@ -531,19 +625,23 @@ export function ProductPage() {
                             style={{ backgroundColor: color.toLowerCase() }}
                           />
                           {color}
-                          {selectedColor === color && <Check className="h-3 w-3" />}
+                          {selectedColor === color && (
+                            <Check className="h-3 w-3" />
+                          )}
                         </button>
-                      )
+                      );
                     })}
                   </div>
                 </div>
 
                 {/* Stock indicator */}
                 {selectedSize && selectedColor && currentStock !== null && (
-                  <div className={cn(
-                    'flex items-center gap-2 text-sm',
-                    currentStock > 0 ? 'text-green-600' : 'text-red-600'
-                  )}>
+                  <div
+                    className={cn(
+                      "flex items-center gap-2 text-sm",
+                      currentStock > 0 ? "text-green-600" : "text-red-600",
+                    )}
+                  >
                     {currentStock > 0 ? (
                       <>
                         <Check className="h-4 w-4" />
@@ -584,7 +682,7 @@ export function ProductPage() {
                 <button
                   onClick={() => {
                     if (currentStock !== null) {
-                      setQuantity(Math.min(currentStock, quantity + 1))
+                      setQuantity(Math.min(currentStock, quantity + 1));
                     }
                   }}
                   className="px-3 py-2 hover:bg-muted transition-colors"
@@ -612,7 +710,7 @@ export function ProductPage() {
                 disabled={!canAddToCart}
               >
                 <ShoppingCart className="h-5 w-5 mr-2" />
-                {isInCart(product.id) ? 'Add More' : 'Add to Cart'}
+                {isInCart(product.id) ? "Add More" : "Add to Cart"}
               </Button>
               <Button
                 size="lg"
@@ -626,8 +724,12 @@ export function ProductPage() {
                   <Loader2 className="h-5 w-5 animate-spin" />
                 ) : (
                   <>
-                    <Heart className={`h-5 w-5 ${inWishlist ? 'fill-current' : ''}`} />
-                    <span className="ml-2 sm:hidden">{inWishlist ? 'Remove from Wishlist' : 'Add to Wishlist'}</span>
+                    <Heart
+                      className={`h-5 w-5 ${inWishlist ? "fill-current" : ""}`}
+                    />
+                    <span className="ml-2 sm:hidden">
+                      {inWishlist ? "Remove from Wishlist" : "Add to Wishlist"}
+                    </span>
                   </>
                 )}
               </Button>
@@ -636,10 +738,21 @@ export function ProductPage() {
 
           {/* Product Meta */}
           <div className="border-t pt-6 space-y-2 text-sm text-muted-foreground">
-            <p><span className="font-medium text-foreground">SKU:</span> {product.sku}</p>
-            <p><span className="font-medium text-foreground">Category:</span> {product.category}</p>
+            <p>
+              <span className="font-medium text-foreground">SKU:</span>{" "}
+              {product.sku}
+            </p>
+            <p>
+              <span className="font-medium text-foreground">Category:</span>{" "}
+              {product.category}
+            </p>
             {product.subcategory && (
-              <p><span className="font-medium text-foreground">Subcategory:</span> {product.subcategory}</p>
+              <p>
+                <span className="font-medium text-foreground">
+                  Subcategory:
+                </span>{" "}
+                {product.subcategory}
+              </p>
             )}
           </div>
         </div>
@@ -648,5 +761,5 @@ export function ProductPage() {
       {/* Reviews Section */}
       <ReviewSection productId={product.id} />
     </div>
-  )
+  );
 }

@@ -146,7 +146,7 @@ export function ProductCard({ product }: ProductCardProps) {
         <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
           {product.category}
         </p>
-        <h3 className="font-medium text-foreground line-clamp-2 mb-2 min-h-[2.5rem]">
+        <h3 className="font-medium text-foreground line-clamp-2 mb-2 min-h-10">
           {product.name}
         </h3>
         {product.author && (
