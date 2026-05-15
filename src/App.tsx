@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { BrowserRouter, Routes, Route, Navigate, Link } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { MainLayout, AdminLayout } from "@/components/layout";
 import { ScrollToTop } from "@/components/common/ScrollToTop";
 import { ROUTES } from "@/constants/routes";
@@ -51,56 +51,14 @@ import {
   TestimonialsSection,
 } from "@/components/home";
 import { ContactForm } from "@/components/contact";
-import { AlertCircle, Loader2, X } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { supabase } from "@/services/supabase";
-import { Button } from "@/components/ui/button";
+
 
 // Placeholder pages - will be replaced with actual page components
 function HomePage() {
-  const [showSignupBanner, setShowSignupBanner] = useState(true);
-
   return (
     <div>
-      {showSignupBanner && (
-        <div className="border-b bg-amber-50/80 text-amber-950">
-          <div className="container mx-auto px-4 py-3 md:py-4">
-            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-              <div className="flex gap-3">
-                <AlertCircle className="h-5 w-5 text-amber-700 mt-0.5" />
-                <div className="space-y-1">
-                  <p className="font-semibold">We fixed a small signup issue</p>
-                  <p className="text-sm text-amber-900/80 max-w-2xl">
-                    If you tried to create an account recently, please try
-                    again. New accounts are processing normally now.
-                  </p>
-                  <ol className="text-sm text-amber-900/80 list-decimal list-inside flex flex-col sm:flex-row sm:gap-4">
-                    <li>Create your account</li>
-                    <li>Confirm your email</li>
-                    <li>Sign in to continue</li>
-                  </ol>
-                </div>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <Button asChild size="sm">
-                  <Link to={ROUTES.REGISTER}>Create account</Link>
-                </Button>
-                <Button asChild variant="outline" size="sm">
-                  <Link to={ROUTES.LOGIN}>Sign in</Link>
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setShowSignupBanner(false)}
-                  aria-label="Dismiss signup banner"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
       <HeroSection />
       <FeaturedProducts />
       <CategorySection />
