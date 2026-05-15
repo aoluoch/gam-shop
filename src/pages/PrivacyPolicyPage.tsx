@@ -5,7 +5,7 @@ export function PrivacyPolicyPage() {
   return (
     <div className="container mx-auto px-4 py-12 max-w-4xl">
       <h1 className="text-4xl font-bold text-primary mb-2">Privacy Policy</h1>
-      <p className="text-muted-foreground mb-8">Last updated: December 17, 2024</p>
+      <p className="text-muted-foreground mb-8">Last updated: January 17, 2026</p>
 
       <div className="prose prose-lg max-w-none space-y-8">
         <section>
@@ -185,9 +185,9 @@ export function PrivacyPolicyPage() {
           </p>
           <div className="bg-muted p-6 rounded-lg mt-4">
             <p className="text-foreground font-medium">GAM Shop</p>
-            <p className="text-foreground/80 mt-2">Email: privacy@gamshop.com</p>
-            <p className="text-foreground/80">Phone: +123 456 7890</p>
-            <p className="text-foreground/80">Address: 123 Ministry Street, City, Country</p>
+            <p className="text-foreground/80 mt-2">Email: gracearenakenya@gmail.com</p>
+            <p className="text-foreground/80">Phone: 0759 212574</p>
+            <p className="text-foreground/80">Address: Bungoma Road, off Baricho Road, Nairobi, Kenya</p>
           </div>
         </section>
 

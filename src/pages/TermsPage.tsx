@@ -5,7 +5,7 @@ export function TermsPage() {
   return (
     <div className="container mx-auto px-4 py-12 max-w-4xl">
       <h1 className="text-4xl font-bold text-primary mb-2">Terms and Conditions</h1>
-      <p className="text-muted-foreground mb-8">Last updated: December 17, 2024</p>
+      <p className="text-muted-foreground mb-8">Last updated: January 17, 2026</p>
 
       <div className="prose prose-lg max-w-none space-y-8">
         <section>
