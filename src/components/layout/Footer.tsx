@@ -9,7 +9,7 @@ export function Footer() {
   return (
     <footer className="border-t bg-primary text-primary-foreground">
       <div className="container mx-auto px-4 py-8 md:py-12">
-        <div className="grid gap-6 sm:gap-8 sm:grid-cols-2 md:grid-cols-3">
+        <div className="grid gap-6 sm:gap-8 sm:grid-cols-2 lg:grid-cols-4">
           {/* Brand */}
           <div className="space-y-4">
             <Link to={ROUTES.HOME} className="flex items-center gap-2">
@@ -46,6 +46,29 @@ export function Footer() {
                     className="text-primary-foreground/80 hover:text-secondary transition-colors"
                   >
                     {category.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Support */}
+          <div className="space-y-4">
+            <h3 className="font-semibold text-lg">Support</h3>
+            <ul className="space-y-2 text-sm">
+              {[
+                { label: 'About', href: ROUTES.ABOUT },
+                { label: 'Contact', href: ROUTES.CONTACT },
+                { label: 'FAQ', href: ROUTES.FAQ },
+                { label: 'Shipping', href: ROUTES.SHIPPING },
+                { label: 'Returns', href: ROUTES.RETURNS },
+              ].map((link) => (
+                <li key={link.href}>
+                  <Link
+                    to={link.href}
+                    className="text-primary-foreground/80 hover:text-secondary transition-colors"
+                  >
+                    {link.label}
                   </Link>
                 </li>
               ))}

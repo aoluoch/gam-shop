@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useToast } from '@/hooks/useToast'
 import { addToWishlist, removeFromWishlist, isInWishlist } from '@/services/wishlist.service'
 import { supabase } from '@/services/supabase'
+import { getThumbnailUrl } from '@/services/cloudinary.service'
 import type { Product } from '@/types/product'
 
 interface ProductCardProps {
@@ -116,8 +117,10 @@ export function ProductCard({ product }: ProductCardProps) {
     <Card className="group overflow-hidden hover:shadow-lg transition-shadow">
       <div className="relative aspect-square bg-muted overflow-hidden">
         <img
-          src={product.thumbnail || '/placeholder.svg'}
-          alt={product.name}
+          src={product.thumbnail ? getThumbnailUrl(product.thumbnail, 500) : '/placeholder.svg'}
+          alt={`${product.name} product thumbnail`}
+          loading="lazy"
+          decoding="async"
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
         />
         {product.compareAtPrice && product.compareAtPrice > product.price && (

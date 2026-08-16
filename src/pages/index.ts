@@ -29,3 +29,4 @@ export {
 } from './Admin';
 export { WishlistPage } from './Wishlist';
 export { AboutPage } from './AboutPage';
+export { NotFoundPage } from './NotFound/NotFoundPage';

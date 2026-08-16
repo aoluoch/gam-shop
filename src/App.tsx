@@ -35,7 +35,9 @@ import {
   AdminFinancialSheetPage,
   WishlistPage,
   AboutPage,
+  NotFoundPage,
 } from "@/pages";
+import { RouteSeo } from "@/components/seo";
 import { AuthProvider } from "@/context/AuthContext";
 import { CartProvider } from "@/context/CartContext";
 import { ToastProvider } from "@/context/ToastContext";
@@ -440,6 +442,8 @@ function GuestRoute({ children }: { children: React.ReactNode }) {
 
 function AppRoutes() {
   return (
+    <>
+    <RouteSeo />
     <Routes>
       {/* Main site routes */}
       <Route element={<MainLayout />}>
@@ -536,6 +540,7 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
+        <Route path="*" element={<NotFoundPage />} />
       </Route>
 
       {/* Admin routes with AdminLayout (sidebar navigation) */}
@@ -583,6 +588,7 @@ function AppRoutes() {
         />
       </Route>
     </Routes>
+    </>
   );
 }
 

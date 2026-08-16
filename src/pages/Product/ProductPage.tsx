@@ -24,6 +24,9 @@ import {
 import { cn } from "@/lib/utils";
 import { ReviewSection } from "@/components/product/ReviewSection";
 import type { Product, ProductVariant } from "@/types/product";
+import { useSeo } from "@/components/seo";
+import { productSeo } from "@/config/seo";
+import { NotFoundPage } from "@/pages/NotFound/NotFoundPage";
 
 export function ProductPage() {
   const { id } = useParams<{ id: string }>();
@@ -44,6 +47,30 @@ export function ProductPage() {
   const [quantity, setQuantity] = useState(1);
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [touchEndX, setTouchEndX] = useState<number | null>(null);
+  const [notFound, setNotFound] = useState(false);
+
+  const seoConfig = useMemo(
+    () =>
+      notFound
+        ? {
+            title: "Product Not Found | GAM Shop",
+            description: "The requested GAM Shop product could not be found.",
+            path: id ? `/product/${id}` : "/shop",
+            noindex: true,
+          }
+        : product
+        ? productSeo(product)
+        : {
+            title: "Product Details | GAM Shop",
+            description:
+              "View product details, availability, pricing, and purchase options at GAM Shop.",
+            path: id ? `/product/${id}` : "/shop",
+            type: "product" as const,
+          },
+    [product, id, notFound],
+  );
+
+  useSeo(seoConfig);
 
   const loadProduct = useCallback(
     async (productId: string) => {
@@ -57,7 +84,7 @@ export function ProductPage() {
 
         if (error || !data) {
           showError("Product not found");
-          navigate("/shop");
+          setNotFound(true);
           return;
         }
 
@@ -122,7 +149,7 @@ export function ProductPage() {
         setLoading(false);
       }
     },
-    [navigate, showError],
+    [showError],
   );
 
   useEffect(() => {
@@ -415,6 +442,9 @@ export function ProductPage() {
   }
 
   if (!product) {
+    if (notFound) {
+      return <NotFoundPage />;
+    }
     return null;
   }
 
@@ -439,7 +469,9 @@ export function ProductPage() {
                 width: 800,
                 height: 800,
               })}
-              alt={product.name}
+              alt={`${product.name} product photo`}
+              decoding="async"
+              fetchPriority="high"
               className="w-full h-full object-cover"
             />
 
